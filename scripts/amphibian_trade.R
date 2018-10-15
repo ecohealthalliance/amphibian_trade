@@ -223,6 +223,14 @@ a.live.caudates.bsal.countries %>%
 #==============================================================================
 
 
+# Add a column to the dataframe giving the full country of origin name
+
+a.live <- filter(lemis_codes, field == "country") %>%
+  select(code, value) %>%
+  rename(country_origin_full = value) %>%
+  left_join(a.live, ., by = c("country_origin" = "code"))
+
+
 # Question 1
 # What percentage of amphibians imported to the US are coming from countries 
 # with Bsal and how has this changed over time?  
@@ -230,7 +238,7 @@ a.live.caudates.bsal.countries %>%
 a.live %>%
   mutate(
     country_origin_mod = case_when(
-      country_origin %in% countries.of.interest ~ country_origin,
+      country_origin %in% countries.of.interest ~ country_origin_full,
       TRUE ~ "Non-Bsal Country"
     ),
     country_origin_mod = as.factor(country_origin_mod),
@@ -240,9 +248,9 @@ a.live %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = country_origin_mod)) +
   geom_col() + 
-  ggtitle("Trends in Amphibian Imports from All Countries") +
+  ggtitle("Trends in Live Amphibian Imports from All Countries") +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Country") +
-  scale_x_continuous(limits = c(1999, 2016), breaks = 2000:2015) +
+  # scale_x_continuous(limits = c(1999, 2016), breaks = 2000:2015) +
   theme_minimal() + 
   theme(plot.title = element_text(face = "bold"),
         axis.title.x = element_text(face = "bold"),
@@ -253,17 +261,21 @@ ggsave("outputs/live_amphibian_imports_by_country.png",
        width = 10, height = 6)
 
 
+my.main.title <- 
+  expression(bold(paste("Trends in Live Amphibian Imports from ", 
+                        bolditalic("Bsal"), 
+                        " Positive Countries")))
+
 a.live %>%
   filter(country_origin %in% countries.of.interest) %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
-             fill = country_origin)) +
+             fill = country_origin_full)) +
   geom_col() + 
-  ggtitle("Trends in Amphibian Imports from Bsal Positive Countries") +
+  ggtitle(my.main.title) +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Country") +
-  scale_x_continuous(limits = c(1999, 2016), breaks = 2000:2015) +
+  # scale_x_continuous(limits = c(1999, 2016), breaks = 2000:2015) +
   theme_minimal() + 
-  theme(plot.title = element_text(face = "bold"),
-        axis.title.x = element_text(face = "bold"),
+  theme(axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         legend.title = element_text(face = "bold")) 
 
@@ -274,19 +286,24 @@ ggsave("outputs/live_amphibian_imports_by_country_only_Bsal_positive.png",
 # Question 2
 # How many individuals of known Bsal carrier species were imported to the US?
 
+my.main.title <- 
+  expression(bold(paste("Trends in Live Amphibian Imports of Heavily Traded ", 
+                        bolditalic("Bsal"), 
+                        " Carrier Genera")))
+
 a.live %>%
   filter(genus %in% genera.of.interest) %>% 
+  mutate(genus = Hmisc::capitalize(genus)) %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = genus)) +
   geom_col() + 
-  ggtitle("Trends in Heavily Traded Bsal Carrier Genera") +
+  ggtitle(my.main.title) +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
   theme_minimal() +
-  theme(plot.title = element_text(face = "bold"),
-        axis.title.x = element_text(face = "bold"),
+  theme(axis.title.x = element_text(face = "bold"),
         axis.title.y = element_text(face = "bold"),
         legend.title = element_text(face = "bold"),
-        legend.text = element_text(face = "italic")) 
+        legend.text = element_text(face = "italic"))
 
 ggsave("outputs/live_amphibian_imports_Bsal_carrier_genera.png",
        width = 10, height = 6)
