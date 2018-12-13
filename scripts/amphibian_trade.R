@@ -19,7 +19,7 @@ lemis_metadata <- lemis_metadata()
 #==============================================================================
 
 
-# Identify genera of records in lemis that were (at least sometimes) 
+# Identify genera of records in LEMIS that were (at least sometimes) 
 # classified without a taxa
 
 genera.of.taxa.NAs <- lemis_data() %>% 
@@ -27,17 +27,18 @@ genera.of.taxa.NAs <- lemis_data() %>%
   pull(genus) %>%
   unique()
 
-# Get amphibian data from lemis
+# Get amphibian data from LEMIS
 
 a.strict <- lemis_data() %>%
   filter(taxa == "amphibian")
+
+nrow(a.strict)
 
 # Which genera in genera.of.taxa.NAs are from amphibians?
 
 genera.to.keep <- 
   genera.of.taxa.NAs[which(genera.of.taxa.NAs %in% unique(a.strict$genus))]
-genera.to.keep <- 
-  genera.to.keep[!is.na(genera.to.keep)]
+genera.to.keep <- genera.to.keep[!is.na(genera.to.keep)]
 
 # Pull in new amphibian data for use that is picking up even those amphibian
 # records for which taxa data is missing
@@ -52,6 +53,148 @@ a <- lemis_data() %>%
     shipment_yearmon = as.yearmon(shipment_date),
     shipment_yearqtr = as.yearqtr(shipment_date)
   )
+
+nrow(a)
+
+# Add a column to the dataframe giving the full country of origin name
+
+a <- filter(lemis_codes, field == "country") %>%
+  select(code, value) %>%
+  rename(country_origin_full = value) %>%
+  left_join(a, ., by = c("country_origin" = "code"))
+
+nrow(a)
+
+# Correct spelling errors in LEMIS taxonomic information
+
+a <- a %>%
+  mutate(
+    genus = case_when(
+      # correct misspelling of "afrixalus" 
+      # ("afrilaxus" is not a valid amphibian genus)
+      genus == "afrilaxus" ~ "afrixalus",
+      # correct misspelling of "tomopterna" 
+      # ("tompterna" is not a valid amphibian genus)
+      genus == "tompterna" ~ "tomopterna",
+      TRUE ~ genus
+    ),
+    species = case_when(
+      # "hyla marmurata" seems to be a misspelling of 
+      # "hyla marmorata"
+      genus == "hyla" & species == "marmurata" ~ "marmorata",
+      # "hyperolius puncturatus" seems to be a misspelling of 
+      # "hyperolius punctulatus"
+      genus == "hyperolius" & species == "puncturatus" ~ "punctulatus",
+      # "leptolalax peloclytoicles" seems to be a misspelling of
+      # "leptolalax pelodytoides"
+      genus == "leptolalax" & species == "peloclytoicles" ~ "pelodytoides",
+      # "rana catesbeinana" seems to be a misspelling of
+      # "rana catesbeiana"
+      genus == "rana" & species == "catesbeinana" ~ "catesbeiana",
+      # "sp" or "sp." should be synonymized to "spp."
+      species == "sp" | species == "sp." ~ "spp.",
+      TRUE ~ species
+    )
+  )
+
+# Import AmphibiaWeb taxonomy
+
+a.taxonomy <- read_csv("data/amphib_names.csv") %>%
+  mutate(genus_mod = tolower(genus),
+         species_mod = tolower(species))
+
+# Which LEMIS genera values do not appear in AmphibiaWeb genera?
+
+unique(a$genus)[which(!(unique(a$genus) %in% unique(a.taxonomy$genus_mod)))]
+
+# Generate new generic and species names to synonymize with AmphibiaWeb
+
+a <- a %>%
+  mutate(
+    genus_mod = case_when(
+      # rename "batrachophrynus" to "telmatobius"
+      # (according to AmphibiaWeb, all Batrachophrynus should be Telmatobius)
+      genus == "batrachophrynus" ~ "telmatobius",
+      # rename "caudiverbera caudiverbera" to "calyptocephalella gayi"
+      genus == "caudiverbera" & species == "caudiverbera" ~ 
+        "calyptocephalella",
+      # rename "ceratobatrachus guentheri" to "cornufer guentheri"
+      genus == "ceratobatrachus" & species == "guentheri" ~ "cornufer",
+      # rename "chirixalus nongkhorensis" to "chiromantis nongkhorensis"
+      genus == "chirixalus" & species == "nongkhorensis" ~ "chiromantis",
+      # rename "chirixalus vittatus" to "feihyla vittatus"
+      genus == "chirixalus" & species == "vittatus" ~ "feihyla",
+      # rename "cryptophyllobates" to "hyloxalus"
+      # (according to AmphibiaWeb, all Cryptophyllobates should be Hyloxalus)
+      genus == "cryptophyllobates" ~ "hyloxalus",
+      # rename "leptolalax" to "leptobrachella"
+      # (according to AmphibiaWeb, all Leptolalax should be Leptobrachella)
+      genus == "leptolalax" ~ "leptobrachella",
+      # rename "lithobates" to "rana"
+      # (according to AmphibiaWeb, all Lithobates should be Rana)
+      genus == "lithobates" ~ "rana",
+      # rename "ooedozyga" to "occidozyga"
+      # (I believe Ooedozyga is a synonym or old name for Occidozyga)
+      genus == "ooedozyga" ~ "occidozyga",
+      # rename "paa spinosa" to "quasipaa spinosa"
+      genus == "paa" & species == "spinosa" ~ "quasipaa",
+      # rename "pachymedusa dacnicolor" to "agalychnis dacnicolor"
+      genus == "pachymedusa" & species == "dacnicolor" ~ "agalychnis",
+      # rename "phrynohyas" to "trachycephalus"
+      # (according to AmphibiaWeb, all Phrynohyas should be Trachycephalus)
+      genus == "phrynohyas" ~ "trachycephalus",
+      # rename "phrynomerus" to "phrynomantis"
+      # (I believe Phrynomerus is a synonym or old name for Phrynomantis)
+      genus == "phrynomerus" ~ "phrynomantis",
+      # rename "silurana" to "xenopus"
+      # (according to AmphibiaWeb, all Silurana should be Xenopus)
+      genus == "silurana" ~ "xenopus",
+      # rename "speleomantes" to "hydromantes"
+      # (according to AmphibiaWeb, all Speleomantes should be Hydromantes)
+      genus == "speleomantes" ~ "hydromantes",
+      # rename "typhlomolge" to "eurycea"
+      # (according to AmphibiaWeb, all Typhlomolge should be Eurycea)
+      genus == "typhlomolge" ~ "eurycea",
+      # rename "vibrissaphora" to "leptobrachium"
+      # (according to AmphibiaWeb, all Vibrissaphora should be Leptobrachium)
+      genus == "vibrissaphora" ~ "leptobrachium",
+      TRUE ~ genus
+    ),
+    species_mod = case_when(
+      # change "caudiverbera caudiverbera" to "calyptocephalella gayi"
+      genus == "caudiverbera" & species == "caudiverbera" ~ "gayi",
+      TRUE ~ species
+    )
+  )
+
+# Now which LEMIS genera values do not appear in AmphibiaWeb genera?
+
+unique(a$genus_mod)[which(!(unique(a$genus_mod) %in% unique(a.taxonomy$genus_mod)))]
+
+# Add Order-level information using AmphibiaWeb taxonomy
+
+a <- left_join(a,
+               distinct(a.taxonomy, order, genus_mod),
+               by = "genus_mod") %>%
+  # In cases where the LEMIS data assigned a family name for the genus
+  # field or a old genus name could not be unambiguously assigned to the
+  # AmphibiaWeb taxonomy, manually assign the correct Order
+  mutate(order = case_when(
+    genus_mod == "bufonidae" ~ "Anura",
+    genus_mod == "caeciliidae" ~ "Gymnophiona",
+    genus_mod == "discoglossidae" ~ "Anura",
+    genus_mod == "chirixalus" ~ "Anura",
+    genus_mod == "paa" ~ "Anura",
+    TRUE ~ order
+  ))
+
+nrow(a)
+
+# Which genus/species combinations were we unable to assign an Order?
+# (should be only non-CITES entries and records with an unknown genus)
+
+filter(a, is.na(order)) %>%
+  distinct(genus_mod, species_mod)
 
 #==============================================================================
 
@@ -80,9 +223,7 @@ sum(as.numeric(lemis.live$quantity))
 # Subset live amphibian data down to caudates
 
 a.live.caudates <- a.live %>%
-  filter(generic_name %in% c("AMPHIUMA", "AXOLOTL", "MUDPUPPY", 
-                             "NEWT", "OLM", "SALAMANDER", 
-                             "SIREN", "WATERDOG"))
+  filter(order == "Caudata")
 
 # How many live caudate individuals are reported in the data?
 
@@ -162,7 +303,7 @@ a.live %>%
 # Summarize all live amphibian imports by country of origin
 
 a.live %>%
-  group_by(country_origin) %>%
+  group_by(country_origin, country_origin_full) %>%
   summarize(n_shipments = n(), 
             total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
@@ -179,7 +320,7 @@ a.live.bsal.carrier.genera %>%
 # Summarize live amphibian imports of Bsal carrier genera by country of origin
 
 a.live.bsal.carrier.genera %>%
-  group_by(country_origin) %>%
+  group_by(country_origin, country_origin_full) %>%
   summarize(n_shipments = n(), 
             total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
@@ -221,14 +362,6 @@ a.live.caudates.bsal.countries %>%
   arrange(desc(total_individuals))
 
 #==============================================================================
-
-
-# Add a column to the dataframe giving the full country of origin name
-
-a.live <- filter(lemis_codes, field == "country") %>%
-  select(code, value) %>%
-  rename(country_origin_full = value) %>%
-  left_join(a.live, ., by = c("country_origin" = "code"))
 
 
 # Question 1
