@@ -5,6 +5,7 @@
 library(tidyverse)
 library(lemis)
 library(zoo)
+library(assertthat)
 
 options(scipen = 10000)
 
@@ -19,7 +20,10 @@ lemis_metadata <- lemis_metadata()
 #==============================================================================
 
 
-# Identify genera of records in LEMIS that were (at least sometimes) 
+# Import LEMIS data, ensuring broadest potential set of amphibian data
+
+
+# First, identify genera of records in LEMIS that were (at least sometimes) 
 # classified without a taxa
 
 genera.of.taxa.NAs <- lemis_data() %>% 
@@ -40,8 +44,8 @@ genera.to.keep <-
   genera.of.taxa.NAs[which(genera.of.taxa.NAs %in% unique(a.strict$genus))]
 genera.to.keep <- genera.to.keep[!is.na(genera.to.keep)]
 
-# Pull in new amphibian data for use that is picking up even those amphibian
-# records for which taxa data is missing
+# Pull in amphibian data again, picking up even those amphibian
+# records for which "taxa" data is missing
 
 a <- lemis_data() %>%
   filter(taxa == "amphibian" | (is.na(taxa) & genus %in% genera.to.keep),
@@ -54,8 +58,6 @@ a <- lemis_data() %>%
     shipment_yearqtr = as.yearqtr(shipment_date)
   )
 
-nrow(a)
-
 # Add a column to the dataframe giving the full country of origin name
 
 a <- filter(lemis_codes, field == "country") %>%
@@ -63,7 +65,37 @@ a <- filter(lemis_codes, field == "country") %>%
   rename(country_origin_full = value) %>%
   left_join(a, ., by = c("country_origin" = "code"))
 
-nrow(a)
+rows <- nrow(a)
+rows
+quantity <- sum(a$quantity)
+quantity
+
+#==============================================================================
+
+
+# Initial data cleaning
+
+
+# For records that are exact duplicates except for the "quantity" column:
+# squash the records together by summing the "quantity" column
+
+cols <- colnames(a)[colnames(a) != "quantity"]
+
+a <- group_by_at(a, vars(one_of(cols))) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup()
+
+# We should have fewer rows but the same overall quantity of animals
+
+assert_that(nrow(a) < rows)
+rows <- nrow(a)
+assert_that(sum(a$quantity) == quantity)
+
+#==============================================================================
+
+
+# Synonymizing taxonomic names
+
 
 # Correct spelling errors in LEMIS taxonomic information
 
@@ -94,6 +126,46 @@ a <- a %>%
       # "sp" or "sp." should be synonymized to "spp."
       species == "sp" | species == "sp." ~ "spp.",
       TRUE ~ species
+    )
+  )
+
+# Fill out genus and/or species information based on species codes, 
+# where possible
+
+a <- a %>%
+  mutate(
+    genus = case_when(
+      # "HBOU" is "hymenochirus boulengeri"
+      taxa == "amphibian" & is.na(genus) & species_code == "HBOU" ~ "hymenochirus",
+      # "HYMC" is "hymenochirus curtipes"
+      taxa == "amphibian" & is.na(genus) & species_code == "HYMC" ~ "hymenochirus",
+      # "PRAN" is "proteus anguinus"
+      taxa == "amphibian" & is.na(genus) & species_code == "PRAN" ~ "proteus",
+      # "SASA" is "salamandra salamandra"
+      taxa == "amphibian" & is.na(genus) & species_code == "SASA" ~ "salamandra",
+      # "XELA" is "xenopus laevis"
+      taxa == "amphibian" & is.na(genus) & species_code == "XELA" ~ "xenopus",
+      TRUE ~ genus
+    ),
+    species = case_when(
+      # "HBOU" is "hymenochirus boulengeri"
+      taxa == "amphibian" & is.na(genus) & species_code == "HBOU" ~ "boulengeri",
+      # "HYMC" is "hymenochirus curtipes"
+      taxa == "amphibian" & is.na(genus) & species_code == "HYMC" ~ "curtipes",
+      # "PRAN" is "proteus anguinus"
+      taxa == "amphibian" & is.na(genus) & species_code == "PRAN" ~ "anguinus",
+      # "SASA" is "salamandra salamandra"
+      taxa == "amphibian" & is.na(genus) & species_code == "SASA" ~ "salamandra",
+      # "XELA" is "xenopus laevis"
+      taxa == "amphibian" & is.na(genus) & species_code == "XELA" ~ "laevis",
+      TRUE ~ species
+    )
+  ) %>%
+  mutate(
+    genus = case_when(
+    # "AMBY" is "ambystoma spp."
+    taxa == "amphibian" & is.na(genus) & species_code == "AMBY" ~ "ambystoma",
+    TRUE ~ genus
     )
   )
 
@@ -188,13 +260,13 @@ a <- left_join(a,
     TRUE ~ order
   ))
 
-nrow(a)
-
 # Which genus/species combinations were we unable to assign an Order?
 # (should be only non-CITES entries and records with an unknown genus)
 
 filter(a, is.na(order)) %>%
   distinct(genus_mod, species_mod)
+
+assert_that(nrow(a) == rows)
 
 #==============================================================================
 
@@ -247,6 +319,13 @@ bsal.carrier.genera <-
     "plethodon", "pleurodeles", "salamandra", "salamandrella", "salamandrina",
     "siren", "taricha", "triturus", "tylototriton")
 
+bsal.infected.genera <- 
+  readxl::read_xlsx("data/Bsal_infection_summary.xlsx") %>%
+  distinct(genus) %>% 
+  pull(genus) %>%
+  sort() %>%
+  tolower()
+
 # Generate a vector of highly traded Bsal carrier genera
 # Pachytriton is a salamander genera not listed under Lacey Act 
 # (neither is Bombina)
@@ -257,6 +336,12 @@ genera.of.interest <- c("bombina", "cynops", "pachytriton", "triturus")
 # Japan, Thailand, Vietnam, China, Germany, Belgium, Netherlands
 
 countries.of.interest <- c("JP", "TH", "VN", "CN", "DE", "BE", "NL") 
+
+# May also want to include Hong Kong because Bsal has been detected in 
+# Guangdong Province and Taiwan given the importance of Chinese trade 
+# broadly considered
+
+countries.of.interest.mod <- c(countries.of.interest, "HK", "TW")
 
 #==============================================================================
 
