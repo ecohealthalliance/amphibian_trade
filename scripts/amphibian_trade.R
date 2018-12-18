@@ -5,6 +5,7 @@
 library(tidyverse)
 library(lemis)
 library(zoo)
+library(readxl)
 library(assertthat)
 
 options(scipen = 10000)
@@ -49,26 +50,14 @@ genera.to.keep <- genera.to.keep[!is.na(genera.to.keep)]
 
 a <- lemis_data() %>%
   filter(taxa == "amphibian" | (is.na(taxa) & genus %in% genera.to.keep),
-         !(is.na(taxa) & genus == "noncites entry")) %>%
-  # Add in shipment data in various summarized formats
-  mutate(
-    shipment_year = lubridate::year(shipment_date),
-    shipment_month = lubridate::month(shipment_date),
-    shipment_yearmon = as.yearmon(shipment_date),
-    shipment_yearqtr = as.yearqtr(shipment_date)
-  )
-
-# Add a column to the dataframe giving the full country of origin name
-
-a <- filter(lemis_codes, field == "country") %>%
-  select(code, value) %>%
-  rename(country_origin_full = value) %>%
-  left_join(a, ., by = c("country_origin" = "code"))
+         !(is.na(taxa) & genus == "noncites entry"))
 
 rows <- nrow(a)
 rows
 quantity <- sum(a$quantity)
 quantity
+value <- sum(a$value, na.rm = TRUE)
+value
 
 #==============================================================================
 
@@ -85,11 +74,51 @@ a <- group_by_at(a, vars(one_of(cols))) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
 
-# We should have fewer rows but the same overall quantity of animals
+# We should have fewer rows, the same overall quantity, and reduced value
 
 assert_that(nrow(a) < rows)
 rows <- nrow(a)
 assert_that(sum(a$quantity) == quantity)
+assert_that(sum(a$value, na.rm = TRUE) < value)
+value <- sum(a$value, na.rm = TRUE)
+
+
+# For records that are exact duplicates except for the "value" column
+# AND where one record has an actual "value" whereas the other is NA:
+# preserve only the record listing the actual "value"
+
+cols <- colnames(a)[colnames(a) != "value"]
+
+rows.to.eliminate <- a %>%
+  # arrange by "value" so that the actual value will show up in the "value1"
+  # column
+  arrange(desc(value)) %>%
+  # group by everything except "value"
+  group_by_at(vars(one_of(cols))) %>%
+  summarize(distinct_values = n_distinct(value),
+            value1 = unique(value)[1],
+            value2 = unique(value)[2]) %>%
+  # filter down to only those duplicates where the second "value" is NA
+  filter(distinct_values == 2,
+         is.na(value2)) %>%
+  # remove extraneous columns
+  select(-distinct_values, -value1) %>%
+  # reassign "value2" to "value", which makes an identical dataset to what
+  # appears in "a"
+  rename(value = value2)
+
+# Eliminate these rows
+
+a <- anti_join(a, rows.to.eliminate)
+
+# We should have fewer rows (by the length of "rows.to.eliminate") and 
+# a reduced quantity but the same overall value
+
+assert_that(nrow(a) + nrow(rows.to.eliminate) == rows)
+rows <- nrow(a)
+assert_that(sum(a$quantity) < quantity)
+quantity <- sum(a$quantity)
+assert_that(sum(a$value, na.rm = TRUE) == value)
 
 #==============================================================================
 
@@ -267,6 +296,185 @@ filter(a, is.na(order)) %>%
   distinct(genus_mod, species_mod)
 
 assert_that(nrow(a) == rows)
+
+#==============================================================================
+
+
+# Supplement EHA LEMIS data with data provided by Gray et al. 2015
+
+
+# Import Gray et al. 2015 data
+
+gray <- 
+  read_xlsx("data/DecDetail.Salamander_Import_LIVE_US_04-14.2015.04.03_Name_Removed.xlsx", 
+            col_types = c("numeric", "text", "text", "text", "text",
+                          "text", "text", "text", "numeric", "text",
+                          "text", "text", "text", "text", "text",
+                          "text", "date", "date", "text", "text",
+                          "text"))
+
+
+# Synonymize with our data structure
+
+colnames(gray) <- 
+  c("control_number", "species_code", "genus", "species", 
+    "subspecies", "specific_name", "generic_name", "description", 
+    "quantity", "unit", "country_origin", "country_imp_exp", 
+    "purpose", "source", "action", "disposition", 
+    "disposition_date", "shipment_date", "import_export", "port",
+    "us_co")
+
+gray <- gray %>%
+  mutate(
+    genus = tolower(genus),
+    species = tolower(species),
+    species = case_when(
+      species == "species" ~ "spp.",
+      TRUE ~ species
+    ),
+    disposition_date = as.Date(disposition_date),
+    shipment_date = as.Date(shipment_date),
+    country_origin = case_when(
+      country_origin == "**" ~ NA_character_,
+      TRUE ~ country_origin
+    ),
+    purpose = case_when(
+      purpose == "*" ~ NA_character_,
+      TRUE ~ purpose
+    )
+  )
+
+gray.rows <- nrow(gray)
+gray.rows
+gray.quantity <- sum(gray$quantity)
+gray.quantity
+
+# For records that are exact duplicates except for the "quantity" column:
+# squash the records together by summing the "quantity" column
+
+cols <- colnames(gray)[colnames(gray) != "quantity"]
+
+gray <- group_by_at(gray, vars(one_of(cols))) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup()
+
+# We should have fewer rows but the same overall quantity of animals
+
+assert_that(nrow(gray) < gray.rows)
+gray.rows <- nrow(gray)
+assert_that(sum(gray$quantity) == gray.quantity)
+
+# Get rid of "us_co" column since this has been redacted in the Gray et al.
+# 2015 dataset, resulting in merge conflicts if we don't ignore it
+
+gray <- select(gray, -us_co)
+
+# Verify that dropping this column has not resulted in duplicate rows
+
+assert_that(nrow(gray) == nrow(distinct(gray)))
+
+
+# Get EHA LEMIS data, dropping the "us_co" column
+
+test <- select(a, -us_co)
+
+# Verify that dropping this column has not resulted in duplicate rows
+
+assert_that(nrow(test) == nrow(distinct(test)))
+
+
+# Generate a dataframe where the Gray data is joined onto the EHA LEMIS
+# data
+
+test.joined <- test %>%
+  left_join(gray %>% 
+              mutate(dataset = "both")) %>%
+  replace_na(list(dataset = "eha_only"))
+
+assert_that(nrow(test) == nrow(test.joined))
+filter(test.joined, dataset == "both") %>% nrow(.)
+filter(test.joined, dataset == "eha_only") %>% nrow(.)
+
+# Generate a dataframe where the EHA LEMIS data is joined onto the Gray
+# data
+
+cols <- colnames(gray)
+
+gray.joined <- gray %>%
+  left_join(test %>% 
+              select(one_of(cols)) %>%
+              mutate(dataset = "both")) %>%
+  replace_na(list(dataset = "gray_only"))
+
+assert_that(nrow(gray) == nrow(gray.joined))
+filter(gray.joined, dataset == "both") %>% nrow(.)
+filter(gray.joined, dataset == "gray_only") %>% nrow(.)
+
+
+# Create a binded dataframe, using only rows of the Gray data that are
+# apparently unique to that dataset
+
+bind.df <- bind_rows(
+  test.joined, 
+  filter(gray.joined, dataset == "gray_only")
+)
+
+
+# Which "control_number" values are associated with "gray_only" data?
+
+nums <- gray.joined %>%
+  filter(dataset == "gray_only") %>%
+  pull(control_number)
+
+
+# Inspect data from the binded dataframe that have "control_number" appearing
+# in both the EHA LEMIS data and "gray_only" data
+
+common.nums <- nums[which((nums %in% unique(test$control_number)))]
+
+bind.df %>%
+  filter(control_number %in% common.nums) %>% 
+  arrange(control_number, species_code, dataset) %>%
+  select(control_number, species_code, taxa, 
+         genus, species,
+         description, unit, value, 
+         country_origin, shipment_date,
+         quantity, dataset)
+
+
+# Get data from "gray_only" rows with "control_number" values that do not
+# appear in the EHA LEMIS data at all (so definitely unique to the Gray 
+# data and should be added to the dataframe)
+
+unique.nums <- nums[which(!(nums %in% unique(test$control_number)))]
+
+gray.unique.rows <- bind.df %>%
+  filter(control_number %in% unique.nums)
+
+#==============================================================================
+
+
+# Generate an "a" dataframe for downstream use
+
+a <- bind_rows(test.joined, gray.unique.rows) %>%
+  # join with exisiting "a" dataframe to get back the "us_co" column
+  left_join(a) %>%
+  # Add in shipment data in various summarized formats
+  mutate(
+    shipment_year = lubridate::year(shipment_date),
+    shipment_month = lubridate::month(shipment_date),
+    shipment_yearmon = as.yearmon(shipment_date),
+    shipment_yearqtr = as.yearqtr(shipment_date)
+  )
+
+assert_that(nrow(a) == nrow(test.joined) + nrow(gray.unique.rows))
+
+# Add a column to the dataframe giving the full country of origin name
+
+a <- filter(lemis_codes, field == "country") %>%
+  select(code, value) %>%
+  rename(country_origin_full = value) %>%
+  left_join(a, ., by = c("country_origin" = "code"))
 
 #==============================================================================
 
