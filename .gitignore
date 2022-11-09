@@ -3,6 +3,8 @@
 .RData
 .Ruserdata
 .DS_Store
+data/raw/*
 drafts/*
 outputs/*
+scripts/clean_Gray.R
 scripts/scraps.R
