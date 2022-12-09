@@ -9,11 +9,13 @@ options(scipen = 10000)
 # Import the full cleaned LEMIS amphibian dataset
 
 a <- read_csv("data/cleaned/harmonized_amphibian_LEMIS_1999_to_2021.csv") %>%
+  # add variables for clarity
   mutate(
     country_origin_full = 
       ifelse(country_origin == "TW", "Taiwan", country_origin_full),
     scientific_name = paste(genus_aw, species_aw)
   ) %>%
+  # import full port names
   left_join(
     .,
     lemis::lemis_codes() %>%
@@ -31,14 +33,11 @@ a <- read_csv("data/cleaned/harmonized_amphibian_LEMIS_1999_to_2021.csv") %>%
 nrow(a)
 
 # How many shipments overall?
+# But note that some years don't have "control_number" at all, so this would be
+# an underestimate of shipment numbers
 
 n_distinct(a$control_number)
 
-# How many records are only reported at the level of "sp."?
-
-a %>%
-  filter(species_aw == "sp.") %>%
-  nrow()/nrow(a)
 
 # Generate a dataset representing live amphibian imports, recorded in numbers
 # of individuals
@@ -102,9 +101,13 @@ sum(unique(a$scientific_name) %in% aw.species)
 # What percentage of the dataset has good scientific names and good generic
 # names?
 
+# Good names down to species
 sum(a$scientific_name %in% aw.species)/nrow(a)
+# Proportion of records only reported to "sp."
 nrow(filter(a, species_aw == "sp."))/nrow(a)
+# Good names down to genus
 sum(a$genus_aw %in% aw.genera)/nrow(a)
+# Proportion of records recorded as "Non-CITES entry"
 nrow(filter(a, genus_aw == "Non-CITES entry"))/nrow(a)
 
 #==============================================================================
@@ -157,15 +160,6 @@ lacey.act.from.lemis[!(lacey.act.from.lemis %in% lacey.act.species)]
 
 # Generate a vector of amphibian genera known to carry Bsal
 
-bsal.carrier.genera <-
-  c("Alytes", "Bombina", "Chioglossa", "Cynops", "Euproctus", 
-    "Hydromantes", "Hynobius", "Ichthyosaura", "Lissotriton", "Neurergus",
-    "Notophthalmus", "Onychodactylus", "Pachytriton", "Paramesotriton", 
-    "Plethodon", "Pleurodeles", "Salamandra", "Salamandrella", "Salamandrina",
-    "Siren", "Taricha", "Triturus", "Tylototriton")
-
-assert_that(sum(bsal.carrier.genera %in% aw.genera) == length(bsal.carrier.genera))
-
 bsal.summary.data <- 
   read_csv("~/Desktop/bsal species_countries list - Sheet1.csv")
 
@@ -185,12 +179,6 @@ bsal.carrier.species <- bsal.summary.data %>%
   sort()
 
 assert_that(sum(bsal.carrier.species %in% aw.species) == length(bsal.carrier.species))
-
-# Generate a vector of highly traded Bsal carrier genera
-# Pachytriton is a salamander genera not listed under Lacey Act 
-# (neither is Bombina)
-
-genera.of.interest <- c("Bombina", "Cynops", "Pachytriton", "Triturus") 
 
 #==============================================================================
 
@@ -247,6 +235,7 @@ sum(a.live.bsal.carrier.species$quantity)
 
 # Bsal summary tables
 
+
 # How many unique ports of entry for live amphibians?
 
 unique(a.live$port_full) %>% sort()
@@ -283,6 +272,16 @@ a.live %>%
             total_individuals = sum(quantity)) %>%
   filter(source == "W") %>%
   pull(total_individuals)/sum(a.live$quantity)
+
+# How many live individuals from various genera have been imported from 1999-
+# 2021 for stated commercial purposes?
+
+a.live %>%
+  filter(purpose == "T") %>%
+  group_by(genus_aw) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  arrange(desc(quantity))
 
 
 # Summarize live amphibian imports of Bsal carrier genera by port of entry
@@ -340,6 +339,32 @@ a.live.caudates.bsal.countries %>%
 #==============================================================================
 
 
+# Define palette for plotting
+# https://zenodo.org/record/3381072#.Y4afhuzMJO0
+
+Tol_bright <- c(
+  "#EE6677", "#228833", "#4477AA", "#CCBB44", "#66CCEE", 
+  "#AA3377", "#BBBBBB"
+)
+
+Tol_light <- c(
+  "#BBCC33", "#AAAA00", "#77AADD", "#EE8866", "#EEDD88", 
+  "#FFAABB", "#99DDFF", "#44BB99", "#DDDDDD"
+)
+
+Okabe_Ito <- c(
+  "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", 
+  "#D55E00", "#CC79A7", "#000000"
+)
+
+palette <- c(
+  Okabe_Ito[-c(7)], 
+  Tol_bright[-c(3, 5)]
+)
+
+#==============================================================================
+
+
 # Question 1
 
 # How has the live amphibian trade changed over time?
@@ -355,17 +380,20 @@ a.live %>%
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Order") +
   theme_minimal() + 
   scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
-    text = element_text(size = 16),
-    axis.title.x = element_text(face = "bold", size = 18),
-    axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.85, 0.85),
+    legend.background = element_rect(),
     plot.background = element_rect(color = "white")
   ) 
 
 ggsave("outputs/live_amphibian_imports_over_time.png", 
-       width = 10, height = 6)
+       width = 10, height = 8)
 
 a.live.table <- a.live %>%
   group_by(shipment_year) %>%
@@ -397,6 +425,7 @@ a.live %>%
   left_join(., a.live.table, by = "shipment_year") %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
 
+
 a.leg.meat.table <- a.leg.meat %>%
   group_by(shipment_year) %>%
   summarize(quantity = sum(quantity)) %>%
@@ -414,15 +443,18 @@ mean(a.leg.meat.table$quantity)
 # What percentage of amphibians imported to the US are coming from countries 
 # with Bsal and how has this changed over time?  
 
+key.bsal.countries <- c("CN", "HK", "TW")
+
 a.live %>%
   mutate(
     country_origin_mod = case_when(
-      country_origin %in% countries.of.interest ~ country_origin_full,
+      country_origin %in% key.bsal.countries ~ country_origin_full,
+      country_origin %in% countries.of.interest ~ "Other Bsal Country",
       TRUE ~ "Non-Bsal Country"
     ),
     country_origin_mod = as.factor(country_origin_mod),
-    country_origin_mod = forcats::fct_relevel(country_origin_mod, 
-                                              "Non-Bsal Country", after = Inf)
+    country_origin_mod = forcats::fct_relevel(country_origin_mod,
+      "China", "Hong Kong", "Taiwan", "Other Bsal Country", "Non-Bsal Country")
   ) %>%
   group_by(shipment_year, country_origin_mod) %>%
   summarize(quantity = sum(quantity)) %>%
@@ -430,21 +462,23 @@ a.live %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = country_origin_mod)) +
   geom_col() + 
-  # ggtitle("Trends in Live Amphibian Imports from All Countries") +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Country") +
   theme_minimal() + 
   scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
-    text = element_text(size = 16),
-    axis.title.x = element_text(face = "bold", size = 18),
-    axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.8, 0.85),
+    legend.background = element_rect(),
     plot.background = element_rect(color = "white")
   ) 
 
 ggsave("outputs/live_amphibian_imports_by_country.png", 
-       width = 10, height = 6)
+       width = 10, height = 8)
 
 # Table giving percentages for the plot above
 
@@ -474,10 +508,8 @@ a.live %>%
   left_join(., a.live.table, by = "shipment_year") %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
 
-my.main.title <- 
-  expression(bold(paste("Trends in Live Amphibian Imports from ", 
-                        bolditalic("Bsal"), 
-                        " Positive Countries")))
+
+# Plot with only Bsal countries
 
 a.live %>%
   filter(country_origin %in% countries.of.interest) %>%
@@ -487,21 +519,21 @@ a.live %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = country_origin_full)) +
   geom_col() + 
-  # ggtitle(my.main.title) +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Country") +
   theme_minimal() + 
   scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
-    text = element_text(size = 16),
-    axis.title.x = element_text(face = "bold", size = 18),
-    axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
     plot.background = element_rect(color = "white")
   ) 
 
 ggsave("outputs/live_amphibian_imports_by_country_only_Bsal_positive.png", 
-       width = 10, height = 6)
+       width = 10, height = 8)
 
 #==============================================================================
 
@@ -528,21 +560,23 @@ a.live %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = port_full_mod)) +
   geom_col() + 
-  # ggtitle("Trends in Live Amphibian Imports from All Countries") +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Port") +
   theme_minimal() + 
   scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
-    text = element_text(size = 16),
-    axis.title.x = element_text(face = "bold", size = 18),
-    axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.85, 0.85),
+    legend.background = element_rect(),
     plot.background = element_rect(color = "white")
   ) 
 
 ggsave("outputs/live_amphibian_imports_by_port.png", 
-       width = 10, height = 6)
+       width = 10, height = 8)
 
 # Table giving percentages for the plot above
 
@@ -566,30 +600,89 @@ a.live %>%
 
 # How has the Lacey Act affected amphibian trade?
 
-a.live %>%
+key.lacey.act.genera <- c(
+  "Cynops", "Paramesotriton", "Pleurodeles", 
+  "Salamandra", "Triturus", "Other Lacey Act Genera"
+)
+
+panel.a <- a.live %>%
   filter(genus_aw %in% lacey.act.genera) %>% 
+  mutate(
+    genus_aw = ifelse(
+      genus_aw %in% key.lacey.act.genera,
+      genus_aw,
+      "Other Lacey Act Genera"
+    ),
+    genus_aw = as.factor(genus_aw),
+    genus_aw = forcats::fct_relevel(genus_aw, key.lacey.act.genera)
+  ) %>%
   group_by(shipment_year, genus_aw) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = genus_aw)) +
   geom_col() + 
-  # ggtitle(my.main.title) +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = palette) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.8, 0.8),
+    legend.background = element_rect(),
+    plot.background = element_rect(color = "white")
+  ) 
+
+panel.b <- a.live %>%
+  filter(genus_aw %in% lacey.act.genera) %>% 
+  filter(shipment_year > 2015) %>%
+  mutate(
+    genus_aw = ifelse(
+      genus_aw %in% key.lacey.act.genera,
+      genus_aw,
+      "Other Lacey Act Genera"
+    ),
+    genus_aw = as.factor(genus_aw),
+    genus_aw = forcats::fct_relevel(genus_aw, key.lacey.act.genera)
+  ) %>%
+  group_by(shipment_year, genus_aw) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  ggplot(aes(x = shipment_year + 0.5, y = quantity, 
+             fill = genus_aw)) +
+  geom_col() + 
+  labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
+  theme_minimal() +
+  scale_x_continuous(breaks = 2016:2022) +
+  scale_y_continuous(labels = scales::comma, n.breaks = 6) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
     text = element_text(size = 16),
     axis.title.x = element_text(face = "bold", size = 18),
     axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
-    legend.text = element_text(face = "italic"),
+    legend.title = element_blank(),
+    legend.position = "none",
     plot.background = element_rect(color = "white")
   ) 
 
+panel.b <- cowplot::plot_grid(
+  NULL, panel.b, NULL,
+  nrow = 1, rel_widths = c(2, 6, 2),
+  labels = c("", "b", ""), label_size = 20)
+
+cowplot::plot_grid(
+  panel.a, panel.b, 
+  labels = c("a", ""), label_size = 20, 
+  ncol = 1, rel_heights = c(6, 4)
+)
+
 ggsave("outputs/live_amphibian_imports_only_Lacey_Act.png",
-       width = 10, height = 6)
+       width = 10, height = 10)
 
 a.live.lacey.table <- a.live %>%
   filter(genus_aw %in% lacey.act.genera) %>% 
@@ -610,6 +703,8 @@ mean(a.live.lacey.table$quantity)
 # What's the trend over time?
 summary(lm(quantity ~ shipment_year, data = a.live.lacey.table))
 
+# What's the stated purpose and clearance status of recent Lacey Act 
+# genera shipments?
 a.live %>%
   filter(
     genus_aw %in% lacey.act.genera,
@@ -617,6 +712,9 @@ a.live %>%
   ) %>%
   group_by(purpose, action) %>%
   summarize(quantity = sum(quantity))
+
+
+# Plot of Lacey Act vs. non-Lacey Act status
 
 a.live %>%
   mutate(
@@ -631,21 +729,23 @@ a.live %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = genus_mod)) +
   geom_col() + 
-  #ggtitle(my.main.title) +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Lacey Act Status") +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
-    text = element_text(size = 16),
-    axis.title.x = element_text(face = "bold", size = 18),
-    axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.8, 0.9),
+    legend.background = element_rect(),
     plot.background = element_rect(color = "white")
   ) 
 
 ggsave("outputs/live_amphibian_imports_Lacey_Act_status.png",
-       width = 10, height = 6)
+       width = 10, height = 8)
 
 #==============================================================================
 
@@ -654,91 +754,264 @@ ggsave("outputs/live_amphibian_imports_Lacey_Act_status.png",
 
 # How many individuals of known Bsal carrier species were imported to the US?
 
-a.live %>%
+
+# Species-level analyses
+
+key.bsal.carrier.genera <- 
+  c("Ambystoma", "Anaxyrus", "Andrias", "Cynops", 
+    "Paramesotriton", "Pleurodeles", "Salamandra", "Scaphiopus",
+    "Triturus", "Other Genera")
+
+panel.a <- a.live %>%
   filter(scientific_name %in% bsal.carrier.species) %>% 
+  mutate(
+    genus_aw = ifelse(
+      genus_aw %in% key.bsal.carrier.genera,
+      genus_aw,
+      "Other Genera"
+    ),
+    genus_aw = as.factor(genus_aw),
+    genus_aw = forcats::fct_relevel(genus_aw, key.bsal.carrier.genera)
+  ) %>%
   group_by(shipment_year, genus_aw) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = genus_aw)) +
   geom_col() + 
-  # ggtitle(my.main.title) +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma) +
+  scale_fill_manual(values = palette) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.8, 0.75),
+    legend.background = element_rect(),
+    plot.background = element_rect(color = "white")
+  ) 
+
+panel.b <- a.live %>%
+  filter(scientific_name %in% bsal.carrier.species) %>% 
+  filter(shipment_year > 2015) %>%
+  group_by(shipment_year, genus_aw) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  ggplot(aes(x = shipment_year + 0.5, y = quantity, 
+             fill = genus_aw)) +
+  geom_col() + 
+  labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
+  theme_minimal() +
+  scale_x_continuous(breaks = 2016:2022) +
+  scale_y_continuous(labels = scales::comma, n.breaks = 6) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
     text = element_text(size = 16),
     axis.title.x = element_text(face = "bold", size = 18),
     axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
-    legend.text = element_text(face = "italic"),
+    legend.title = element_blank(),
+    legend.position = "none",
     plot.background = element_rect(color = "white")
   ) 
 
+panel.b <- cowplot::plot_grid(
+  NULL, panel.b, NULL,
+  nrow = 1, rel_widths = c(2, 6, 2),
+  labels = c("", "b", ""), label_size = 20)
+
+cowplot::plot_grid(
+  panel.a, panel.b, 
+  labels = c("a", ""), label_size = 20, 
+  ncol = 1, rel_heights = c(6, 4)
+)
+
 ggsave("outputs/live_amphibian_imports_Bsal_carrier_species.png",
-       width = 10, height = 6)
+       width = 10, height = 10)
 
 a.live.bsal.carrier.species.table <- a.live %>%
   filter(scientific_name %in% bsal.carrier.species) %>% 
-  group_by(shipment_year, genus_aw, species_aw) %>%
+  group_by(shipment_year, scientific_name, genus_aw, species_aw) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
 
 n_distinct(a.live.bsal.carrier.species.table$genus_aw)
 n_distinct(a.live.bsal.carrier.species.table$species_aw)
+n_distinct(a.live.bsal.carrier.species.table$scientific_name)
 
+# How many of these Bsal carrier species were imported per year recently?
 a.live.bsal.carrier.species.table %>%
   filter(shipment_year > 2016) %>%
   group_by(shipment_year) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
 
-a.live %>%
+
+# Genera-level analyses
+
+key.bsal.carrier.families <- 
+  c("Bombinatoridae", "Ranidae", "Salamandridae", "Other Families")
+
+panel.a <- a.live %>%
   filter(genus_aw %in% bsal.carrier.genera) %>% 
-  group_by(shipment_year, family, genus_aw) %>%
+  mutate(
+    family = ifelse(
+      family %in% key.bsal.carrier.families,
+      family,
+      "Other Families"
+    ),
+    family = as.factor(family),
+    family = forcats::fct_relevel(family, key.bsal.carrier.families)
+  ) %>%
+  group_by(shipment_year, family) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
              fill = family)) +
   geom_col() + 
-  # ggtitle(my.main.title) +
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Family") +
   theme_minimal() +
-  scale_y_continuous(labels = scales::comma) +
+  scale_y_continuous(labels = scales::comma, limits = c(0, 4500000)) +
+  scale_fill_manual(values = palette) +
   theme(
     plot.title = element_text(face = "bold"),
-    text = element_text(size = 16),
-    axis.title.x = element_text(face = "bold", size = 18),
-    axis.title.y = element_text(face = "bold", size = 18),
-    legend.title = element_text(face = "bold", size = 16),
-    # legend.text = element_text(face = "italic"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.85, 0.9),
+    legend.background = element_rect(),
     plot.background = element_rect(color = "white")
   ) 
 
+panel.b <- a.live %>%
+  filter(genus_aw %in% bsal.carrier.genera) %>% 
+  filter(shipment_year > 2016) %>%
+  mutate(
+    country_origin_mod = case_when(
+      country_origin %in% key.bsal.countries ~ country_origin_full,
+      country_origin %in% countries.of.interest ~ "Other Bsal Country",
+      TRUE ~ "Non-Bsal Country"
+    ),
+    country_origin_mod = as.factor(country_origin_mod),
+    country_origin_mod = forcats::fct_relevel(country_origin_mod,
+                                              "China", "Hong Kong", "Taiwan", "Other Bsal Country", "Non-Bsal Country")
+  ) %>%
+  group_by(shipment_year, country_origin_mod) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  ggplot(aes(x = shipment_year + 0.5, y = quantity, 
+             fill = country_origin_mod)) +
+  geom_col() + 
+  labs(x = "Shipment Year", y = "Number of Individuals", fill = "Country") +
+  theme_minimal() + 
+  scale_y_continuous(labels = scales::comma, limits = c(0, 4000000)) +
+  scale_fill_manual(values = palette) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.8, 0.85),
+    legend.background = element_rect(),
+    plot.background = element_rect(color = "white")
+  )
+
+panel.c <- a.live %>%
+  filter(genus_aw %in% bsal.carrier.genera) %>% 
+  filter(shipment_year > 2016) %>%
+  mutate(
+    port_full_mod = case_when(
+      port %in% ports.of.interest ~ port_full,
+      TRUE ~ "Other"
+    ),
+    port_full_mod = as.factor(port_full_mod),
+    port_full_mod = forcats::fct_relevel(port_full_mod, 
+                                         "Other", after = Inf)
+  ) %>%
+  group_by(shipment_year, port_full_mod) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  ggplot(aes(x = shipment_year + 0.5, y = quantity, 
+             fill = port_full_mod)) +
+  geom_col() + 
+  labs(x = "Shipment Year", y = "Number of Individuals", fill = "Port") +
+  theme_minimal() + 
+  scale_y_continuous(labels = scales::comma, limits = c(0, 4000000)) +
+  scale_fill_manual(values = palette) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.position = c(0.85, 0.85),
+    legend.background = element_rect(),
+    plot.background = element_rect(color = "white")
+  ) 
+
+panel.b <- cowplot::plot_grid(
+  panel.b, panel.c,
+  nrow = 1,
+  labels = c("b", "c"), label_size = 20)
+
+cowplot::plot_grid(
+  panel.a, panel.b, 
+  labels = c("a", ""), label_size = 20, 
+  ncol = 1
+)
+
 ggsave("outputs/live_amphibian_imports_Bsal_carrier_genera.png",
-       width = 10, height = 6)
+       width = 16, height = 16)
 
 a.live.bsal.carrier.genera.table <- a.live %>%
   filter(genus_aw %in% bsal.carrier.genera) %>% 
-  group_by(shipment_year, family, genus_aw) %>%
+  group_by(shipment_year, family, genus_aw, country_origin, port_full) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
 
+n_distinct(a.live.bsal.carrier.genera.table$genus_aw)
+
+# How many of these were imported per year?
 yearly.summary <- a.live.bsal.carrier.genera.table %>%
   group_by(shipment_year) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
 
+# What's the average number in recent years?
 yearly.summary %>%
   filter(shipment_year > 2016) %>%
   pull(quantity) %>%
   mean()
 
+# Each year expressed as a percentage of overall live amphibian trade
 yearly.summary %>%
   left_join(., a.live.table, by = "shipment_year") %>%
   mutate(percentage = quantity.x/quantity.y*100)
 
+# Each genera expressed as a percentage of Bsal carrier trade
 a.live.bsal.carrier.genera.table %>%
+  left_join(., yearly.summary, by = "shipment_year") %>%
+  mutate(percentage = quantity.x/quantity.y*100)
+
+# Percentage of recent trade coming from countries
+a.live.bsal.carrier.genera.table %>%
+  filter(shipment_year > 2016) %>%
+  group_by(shipment_year, country_origin) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  left_join(., yearly.summary, by = "shipment_year") %>%
+  mutate(percentage = quantity.x/quantity.y*100)
+
+# Percentage of recent trade coming to ports
+a.live.bsal.carrier.genera.table %>%
+  filter(shipment_year > 2016) %>%
+  group_by(shipment_year, port_full) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
   left_join(., yearly.summary, by = "shipment_year") %>%
   mutate(percentage = quantity.x/quantity.y*100)
