@@ -160,8 +160,39 @@ lacey.act.from.lemis[!(lacey.act.from.lemis %in% lacey.act.species)]
 
 # Generate a vector of amphibian genera known to carry Bsal
 
+# Import the data table
+
 bsal.summary.data <- 
-  read_csv("~/Desktop/bsal species_countries list - Sheet1.csv")
+  read_csv("data/reference/Bsal_infection_summary.csv")
+
+nrow(bsal.summary.data)
+
+# Which types of infection observations are present?
+
+table(bsal.summary.data$type, useNA = "ifany")
+
+# Verify that the species name never changed when updating to AW taxonomy
+
+assert_that(sum(bsal.summary.data$species == bsal.summary.data$species_aw) ==
+              nrow(bsal.summary.data))
+
+# Verify that each taxa is only assigned a single Lacey Act status
+
+bsal.summary.data %>%
+  group_by(genus_aw, species_aw) %>%
+  summarize(n_categories = n_distinct(`Lacey Act listed?`)) %>%
+  pull(n_categories) %>%
+  max()
+
+# Which amphibian orders are represented in the data?
+
+sort(unique(bsal.summary.data$order))
+
+# Which amphibian families are represented in the data?
+
+sort(unique(bsal.summary.data$family))
+
+# Create a vector of Bsal carrier genera
 
 bsal.carrier.genera <- bsal.summary.data %>%
   distinct(genus_aw) %>% 
@@ -170,9 +201,13 @@ bsal.carrier.genera <- bsal.summary.data %>%
 
 assert_that(sum(bsal.carrier.genera %in% aw.genera) == length(bsal.carrier.genera))
 
+length(bsal.carrier.genera)
+
+# Create a vector of Bsal carrier species
+
 bsal.carrier.species <- bsal.summary.data %>%
   select(genus_aw, species_aw) %>%
-  filter(species_aw != "spp.") %>%
+  filter(species_aw != "sp.") %>%
   mutate(scientific_name = paste(genus_aw, species_aw)) %>%
   pull(scientific_name) %>%
   unique() %>%
@@ -180,19 +215,39 @@ bsal.carrier.species <- bsal.summary.data %>%
 
 assert_that(sum(bsal.carrier.species %in% aw.species) == length(bsal.carrier.species))
 
+length(bsal.carrier.species)
+
+# Investigate which of these species was Lacey Act Listed
+
+bsal.summary.data %>%
+  distinct(genus_aw, species_aw, `Lacey Act listed?`) %>%
+  filter(species_aw != "sp.") %>%
+  mutate(
+    scientific_name = paste(genus_aw, species_aw),
+    lacey_act_check = ifelse(scientific_name %in% lacey.act.species, 1, 0)
+  )
+
+# In which countries has Bsal been found in the wild?
+
+bsal.summary.data %>%
+  filter(type == "wild") %>%
+  pull(country) %>%
+  unique() %>%
+  sort()
+
 #==============================================================================
 
 
-# Generate a vector of countries of interest where Bsal has been detected:
-# Japan, Thailand, Vietnam, China, Taiwan, 
-# Germany, Belgium, Netherlands, Spain
+# Generate a vector of countries of interest where Bsal has been detected in
+# the wild:
+# Belgium, China, Germany, Japan, Spain, 
+# Taiwan, Thailand, The Netherlands, Vietnam
 
 # May also want to include Hong Kong because Bsal has been detected in 
 # Guangdong Province
 
-countries.of.interest <- c("JP", "TH", "VN", "CN", "TW",
-                           "DE", "BE", "NL", "ES",
-                           "HK")
+countries.of.interest <- c("BE", "CN", "DE", "JP", "ES",
+                           "TW", "TH", "NL", "VN", "HK")
 
 #==============================================================================
 
@@ -434,6 +489,18 @@ a.leg.meat.table <- a.leg.meat %>%
 # What's the average kg of amphibian legs/meat imported per year?
 
 mean(a.leg.meat.table$quantity)
+
+# Break the leg and meat trade down by species
+
+a.leg.meat %>%
+  group_by(genus_aw, species_aw) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  arrange(desc(quantity)) %>%
+  mutate(
+    tot_quantity = sum(a.leg.meat$quantity),
+    percent = quantity/tot_quantity
+  )
 
 #==============================================================================
 
@@ -995,6 +1062,10 @@ yearly.summary %>%
 
 # Each genera expressed as a percentage of Bsal carrier trade
 a.live.bsal.carrier.genera.table %>%
+  filter(shipment_year > 2016) %>%
+  group_by(shipment_year, genus_aw) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
   left_join(., yearly.summary, by = "shipment_year") %>%
   mutate(percentage = quantity.x/quantity.y*100)
 
