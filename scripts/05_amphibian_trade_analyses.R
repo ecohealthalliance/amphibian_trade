@@ -47,7 +47,8 @@ a.live <- a %>%
 
 # How many live amphibian individuals are reported in the data?
 
-sum(a.live$quantity)
+a.live.individuals <- sum(a.live$quantity)
+a.live.individuals
 
 
 # Generate a dataset representing amphibian leg and meat imports, 
@@ -299,24 +300,33 @@ unique(a.live$port_full) %>% sort()
 
 a.live %>%
   group_by(port, port_full) %>%
-  summarize(n_shipments = n(),
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(),
+    total_individuals = sum(quantity),
+    percent_individuals = total_individuals/a.live.individuals*100
+  ) %>%
   arrange(desc(total_individuals))
 
 # Summarize all live amphibian imports by country of origin
 
 a.live %>%
   group_by(country_origin, country_origin_full) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity),
+    percent_individuals = total_individuals/a.live.individuals*100
+  ) %>%
   arrange(desc(total_individuals))
 
 # Summarize all live amphibian imports by source
 
 a.live %>%
   group_by(source) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity),
+    percent_individuals = total_individuals/a.live.individuals*100
+  ) %>%
   arrange(desc(total_individuals))
 
 # What percentage of specimens are wild?
@@ -326,7 +336,7 @@ a.live %>%
   summarize(n_shipments = n(), 
             total_individuals = sum(quantity)) %>%
   filter(source == "W") %>%
-  pull(total_individuals)/sum(a.live$quantity)
+  pull(total_individuals)/a.live.individuals
 
 # How many live individuals from various genera have been imported from 1999-
 # 2021 for stated commercial purposes?
@@ -447,7 +457,7 @@ a.live %>%
     plot.background = element_rect(color = "white")
   ) 
 
-ggsave("outputs/live_amphibian_imports_over_time.png", 
+ggsave("outputs/Fig1.png", 
        width = 10, height = 8)
 
 a.live.table <- a.live %>%
@@ -544,7 +554,7 @@ a.live %>%
     plot.background = element_rect(color = "white")
   ) 
 
-ggsave("outputs/live_amphibian_imports_by_country.png", 
+ggsave("outputs/Fig2.png", 
        width = 10, height = 8)
 
 # Table giving percentages for the plot above
@@ -574,6 +584,22 @@ a.live %>%
   ungroup() %>%
   left_join(., a.live.table, by = "shipment_year") %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
+
+
+# Compare to wildlife trade more generally
+
+l <- lemis::lemis_data() %>%
+  filter(description == "LIV") %>%
+  collect()
+
+total.live.individuals <- sum(l$quantity)
+
+l %>%
+  group_by(country_origin) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  mutate(percent = quantity/total.live.individuals*100) %>%
+  arrange(desc(quantity))
 
 
 # Plot with only Bsal countries
@@ -642,7 +668,7 @@ a.live %>%
     plot.background = element_rect(color = "white")
   ) 
 
-ggsave("outputs/live_amphibian_imports_by_port.png", 
+ggsave("outputs/Fig3.png", 
        width = 10, height = 8)
 
 # Table giving percentages for the plot above
@@ -659,6 +685,16 @@ a.live %>%
   ungroup() %>%
   left_join(., a.live.table, by = "shipment_year") %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
+
+
+# Compare to wildlife trade more generally
+
+l %>%
+  group_by(port) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  mutate(percent = quantity/total.live.individuals*100) %>%
+  arrange(desc(quantity))
 
 #==============================================================================
 
@@ -748,7 +784,7 @@ cowplot::plot_grid(
   ncol = 1, rel_heights = c(6, 4)
 )
 
-ggsave("outputs/live_amphibian_imports_only_Lacey_Act.png",
+ggsave("outputs/Fig4.png",
        width = 10, height = 10)
 
 a.live.lacey.table <- a.live %>%
@@ -896,7 +932,7 @@ cowplot::plot_grid(
   ncol = 1, rel_heights = c(6, 4)
 )
 
-ggsave("outputs/live_amphibian_imports_Bsal_carrier_species.png",
+ggsave("outputs/Fig5.png",
        width = 10, height = 10)
 
 a.live.bsal.carrier.species.table <- a.live %>%
@@ -919,27 +955,27 @@ a.live.bsal.carrier.species.table %>%
 
 # Genera-level analyses
 
-key.bsal.carrier.families <- 
-  c("Bombinatoridae", "Ranidae", "Salamandridae", "Other Families")
+key.bsal.carrier.genera <- 
+  c("Bombina", "Cynops", "Rana", "Triturus", "Other Genera")
 
 panel.a <- a.live %>%
   filter(genus_aw %in% bsal.carrier.genera) %>% 
   mutate(
-    family = ifelse(
-      family %in% key.bsal.carrier.families,
-      family,
-      "Other Families"
+    genus_aw = ifelse(
+      genus_aw %in% key.bsal.carrier.genera,
+      genus_aw,
+      "Other Genera"
     ),
-    family = as.factor(family),
-    family = forcats::fct_relevel(family, key.bsal.carrier.families)
+    genus_aw = as.factor(genus_aw),
+    genus_aw = forcats::fct_relevel(genus_aw, key.bsal.carrier.genera)
   ) %>%
-  group_by(shipment_year, family) %>%
+  group_by(shipment_year, genus_aw) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
   ggplot(aes(x = shipment_year + 0.5, y = quantity, 
-             fill = family)) +
+             fill = genus_aw)) +
   geom_col() + 
-  labs(x = "Shipment Year", y = "Number of Individuals", fill = "Family") +
+  labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma, limits = c(0, 4500000)) +
   scale_fill_manual(values = palette) +
@@ -949,7 +985,7 @@ panel.a <- a.live %>%
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
     legend.title = element_blank(),
-    legend.position = c(0.85, 0.9),
+    legend.position = c(0.85, 0.87),
     legend.background = element_rect(),
     plot.background = element_rect(color = "white")
   ) 
@@ -1032,7 +1068,7 @@ cowplot::plot_grid(
   ncol = 1
 )
 
-ggsave("outputs/live_amphibian_imports_Bsal_carrier_genera.png",
+ggsave("outputs/Fig6.png",
        width = 16, height = 16)
 
 a.live.bsal.carrier.genera.table <- a.live %>%
