@@ -9,7 +9,7 @@ lemis_metadata <- lemis::lemis_metadata()
 #==============================================================================
 
 
-# Import and combine cleaned data sources for downstream use
+# Import and combine cleaned LEMIS data sources for downstream use
 a <- read_csv("data/cleaned/amphibian_LEMIS_1999_and_2015.csv")
 b <- read_csv("data/cleaned/amphibian_LEMIS_2000_to_2014.csv")
 c <- read_csv("data/cleaned/amphibian_LEMIS_2016_to_2021.csv")
@@ -85,7 +85,7 @@ ambiguous.synonyms <- synonymy.table %>%
   filter(n > 1) %>%
   pull(synonym)
 
-# Modify synonymy table to eliminate amibguous synonyms 
+# Modify synonymy table to eliminate ambiguous synonyms 
 synonymy.table <- synonymy.table %>%
   filter(!(synonym %in% ambiguous.synonyms)) %>%
   separate(
@@ -215,7 +215,7 @@ d <- left_join(d,
 
 # Add on information about species' Lacey Act designation
 
-l <- read_csv("data/lacey_act/lacey_act_species.csv")
+l <- read_csv("data/reference/Lacey_Act_species.csv")
 colnames(l) <- tolower(colnames(l))
 l <- l %>%
   mutate(
@@ -259,15 +259,16 @@ d <- left_join(
 
 # Rearrange columns
 d <- d %>%
-  select(control_number, species_code, taxa, class, order, family,
-         genus, genus_aw, species, species_aw, subspecies, 
-         specific_name, generic_name, lacey_act,
-         description, quantity, unit, value, 
-         country_origin, country_origin_full, country_imp_exp, 
-         purpose, source, action, disposition,
-         disposition_date, disposition_year, shipment_date, shipment_year,
-         import_export, port, us_co, foreign_co,
-         cleaning_notes
+  select(
+    control_number, species_code, taxa, class, order, family,
+    genus, genus_aw, species, species_aw, subspecies, 
+    specific_name, generic_name, lacey_act,
+    description, quantity, unit, value, 
+    country_origin, country_origin_full, country_imp_exp, 
+    purpose, source, action, disposition,
+    disposition_date, disposition_year, shipment_date, shipment_year,
+    import_export, port, us_co, foreign_co,
+    cleaning_notes
   )
 
 # Save the final dataset

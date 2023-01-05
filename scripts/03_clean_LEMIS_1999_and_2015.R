@@ -104,13 +104,14 @@ f.a <- f.a %>%
     shipment_date = as.Date(shipment_date, format = "%m/%d/%y"),
     shipment_year = lubridate::year(shipment_date)
   ) %>%
-  select(control_number, species_code, taxa, class, genus, 
-         species, subspecies, specific_name, generic_name,
-         description, quantity, unit, value, country_origin,
-         country_imp_exp, purpose, source, action, disposition,
-         disposition_date, disposition_year, shipment_date, 
-         shipment_year, import_export, port, us_co, foreign_co,
-         cleaning_notes
+  select(
+    control_number, species_code, taxa, class, genus, 
+    species, subspecies, specific_name, generic_name,
+    description, quantity, unit, value, country_origin,
+    country_imp_exp, purpose, source, action, disposition,
+    disposition_date, disposition_year, shipment_date, 
+    shipment_year, import_export, port, us_co, foreign_co,
+    cleaning_notes
   )
 
 #==============================================================================
@@ -155,7 +156,7 @@ f.a <- f.a %>%
       TRUE ~ country_origin
     ),
     country_imp_exp = case_when(
-      country_imp_exp %in% c("**") ~ NA_character_,
+      country_imp_exp == "**" ~ NA_character_,
       TRUE ~ country_imp_exp
     ),
     # replace purpose codes as needed
@@ -166,7 +167,7 @@ f.a <- f.a %>%
     ),
     # replace source codes as needed
     source = case_when(
-      source %in% c("*") ~ NA_character_,
+      source == "*" ~ NA_character_,
       TRUE ~ source
     )
   )

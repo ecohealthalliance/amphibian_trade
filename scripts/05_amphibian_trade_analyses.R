@@ -116,7 +116,7 @@ nrow(filter(a, genus_aw == "Non-CITES entry"))/nrow(a)
 
 # Generate a vector of amphibian genera restricted under the Lacey Act
 
-lacey.act.genera <- read_csv("data/lacey_act/lacey_act_species.csv") %>%
+lacey.act.genera <- read_csv("data/reference/Lacey_Act_species.csv") %>%
   mutate(genus = str_trim(Genus, side = "both")) %>%
   pull(genus) %>%
   unique() %>%
@@ -129,7 +129,7 @@ assert_that(sum(lacey.act.genera %in% aw.genera) == length(lacey.act.genera))
 
 # Generate a vector of amphibian species restricted under the Lacey Act
 
-lacey.act.species <- read_csv("data/lacey_act/lacey_act_species.csv") %>%
+lacey.act.species <- read_csv("data/reference/Lacey_Act_species.csv") %>%
   mutate(
     genus = str_trim(Genus, side = "both"),
     species = str_trim(Species, side = "both"),
@@ -185,11 +185,11 @@ bsal.summary.data %>%
   pull(n_categories) %>%
   max()
 
-# Which amphibian orders are represented in the data?
+# Which amphibian orders are represented in the Bsal carrier data?
 
 sort(unique(bsal.summary.data$order))
 
-# Which amphibian families are represented in the data?
+# Which amphibian families are represented in the Bsal carrier data?
 
 sort(unique(bsal.summary.data$family))
 
@@ -228,6 +228,9 @@ bsal.summary.data %>%
     lacey_act_check = ifelse(scientific_name %in% lacey.act.species, 1, 0)
   )
 
+#==============================================================================
+
+
 # In which countries has Bsal been found in the wild?
 
 bsal.summary.data %>%
@@ -235,9 +238,6 @@ bsal.summary.data %>%
   pull(country) %>%
   unique() %>%
   sort()
-
-#==============================================================================
-
 
 # Generate a vector of countries of interest where Bsal has been detected in
 # the wild:
@@ -289,7 +289,7 @@ sum(a.live.bsal.carrier.species$quantity)
 #==============================================================================
 
 
-# Bsal summary tables
+# Summary tables
 
 
 # How many unique ports of entry for live amphibians?
@@ -329,15 +329,6 @@ a.live %>%
   ) %>%
   arrange(desc(total_individuals))
 
-# What percentage of specimens are wild?
-
-a.live %>%
-  group_by(source) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
-  filter(source == "W") %>%
-  pull(total_individuals)/a.live.individuals
-
 # How many live individuals from various genera have been imported from 1999-
 # 2021 for stated commercial purposes?
 
@@ -353,16 +344,18 @@ a.live %>%
 
 a.live.bsal.carrier.genera %>%
   group_by(port) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
 
 # Summarize live amphibian imports of Bsal carrier genera by country of origin
 
 a.live.bsal.carrier.genera %>%
   group_by(country_origin, country_origin_full) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
 
 
@@ -370,8 +363,9 @@ a.live.bsal.carrier.genera %>%
 
 a.live.bsal.countries %>%
   group_by(port) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
 
 # Summarize live amphibian imports from Bsal endemic countries by country of
@@ -379,8 +373,9 @@ a.live.bsal.countries %>%
 
 a.live.bsal.countries %>%
   group_by(country_origin) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
 
 
@@ -388,8 +383,9 @@ a.live.bsal.countries %>%
 
 a.live.caudates.bsal.countries %>%
   group_by(port) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
 
 # Summarize live caudate imports from Bsal endemic countries by country of
@@ -397,8 +393,9 @@ a.live.caudates.bsal.countries %>%
 
 a.live.caudates.bsal.countries %>%
   group_by(country_origin) %>%
-  summarize(n_shipments = n(), 
-            total_individuals = sum(quantity)) %>%
+  summarize(
+    n_shipments = n(), 
+    total_individuals = sum(quantity)) %>%
   arrange(desc(total_individuals))
 
 #==============================================================================
@@ -457,8 +454,7 @@ a.live %>%
     plot.background = element_rect(color = "white")
   ) 
 
-ggsave("outputs/Fig1.png", 
-       width = 10, height = 8)
+ggsave("outputs/Fig1.png", width = 10, height = 8)
 
 a.live.table <- a.live %>%
   group_by(shipment_year) %>%
@@ -554,8 +550,7 @@ a.live %>%
     plot.background = element_rect(color = "white")
   ) 
 
-ggsave("outputs/Fig2.png", 
-       width = 10, height = 8)
+ggsave("outputs/Fig2.png", width = 10, height = 8)
 
 # Table giving percentages for the plot above
 
@@ -586,7 +581,7 @@ a.live %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
 
 
-# Compare to wildlife trade more generally
+# Compare exporting countries to wildlife trade more generally
 
 l <- lemis::lemis_data() %>%
   filter(description == "LIV") %>%
@@ -668,8 +663,7 @@ a.live %>%
     plot.background = element_rect(color = "white")
   ) 
 
-ggsave("outputs/Fig3.png", 
-       width = 10, height = 8)
+ggsave("outputs/Fig3.png", width = 10, height = 8)
 
 # Table giving percentages for the plot above
 
@@ -687,7 +681,7 @@ a.live %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
 
 
-# Compare to wildlife trade more generally
+# Compare ports of entry to wildlife trade more generally
 
 l %>%
   group_by(port) %>%
@@ -784,8 +778,7 @@ cowplot::plot_grid(
   ncol = 1, rel_heights = c(6, 4)
 )
 
-ggsave("outputs/Fig4.png",
-       width = 10, height = 10)
+ggsave("outputs/Fig4.png", width = 10, height = 10)
 
 a.live.lacey.table <- a.live %>%
   filter(genus_aw %in% lacey.act.genera) %>% 
@@ -932,8 +925,7 @@ cowplot::plot_grid(
   ncol = 1, rel_heights = c(6, 4)
 )
 
-ggsave("outputs/Fig5.png",
-       width = 10, height = 10)
+ggsave("outputs/Fig5.png", width = 10, height = 10)
 
 a.live.bsal.carrier.species.table <- a.live %>%
   filter(scientific_name %in% bsal.carrier.species) %>% 
@@ -1068,8 +1060,7 @@ cowplot::plot_grid(
   ncol = 1
 )
 
-ggsave("outputs/Fig6.png",
-       width = 16, height = 16)
+ggsave("outputs/Fig6.png", width = 16, height = 16)
 
 a.live.bsal.carrier.genera.table <- a.live %>%
   filter(genus_aw %in% bsal.carrier.genera) %>% 

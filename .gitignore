@@ -3,6 +3,5 @@
 .RData
 .Ruserdata
 .DS_Store
-data/raw/*
 documents/*
 scripts/archived_scripts/*

@@ -42,13 +42,14 @@ f <- f %>%
     disposition_year = year(disposition_date),
     shipment_year = year(shipment_date)
   ) %>%
-  select(control_number, species_code, taxa, class, genus, 
-         species, subspecies, specific_name, generic_name,
-         description, quantity, unit, value, country_origin,
-         country_imp_exp, purpose, source, action, disposition,
-         disposition_date, disposition_year, shipment_date, 
-         shipment_year, import_export, port, us_co, foreign_co,
-         cleaning_notes
+  select(
+    control_number, species_code, taxa, class, genus, 
+    species, subspecies, specific_name, generic_name,
+    description, quantity, unit, value, country_origin,
+    country_imp_exp, purpose, source, action, disposition,
+    disposition_date, disposition_year, shipment_date, 
+    shipment_year, import_export, port, us_co, foreign_co,
+    cleaning_notes
   )
 
 #==============================================================================
