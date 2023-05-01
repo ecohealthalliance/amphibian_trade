@@ -7,6 +7,7 @@ Anura,Hylidae,Hyla,chrysoscelis,Hyla,chrysoscelis,Cope's gray tree frog,lab,N/A,
 Anura,Ranidae,Lithobates,chiricahuensis,Rana,chiricahuensis,Chiricahua leopard frog,lab,N/A,1,0,0,Gray_etal_unpublished,,,,,,https://bsalproject.tennessee.edu/studies/
 Anura,Scaphiopodidae,Scaphiopus,holbrookii,Scaphiopus,holbrookii,eastern spadefoot,lab,N/A,1,0,0,Gray_etal_unpublished,,,,,,https://bsalproject.tennessee.edu/studies/
 Anura,Ranidae,Rana,temporaria,Rana,temporaria,common frog,wild,Germany,1,0,0,Schulz_etal_2020,,,,,,
+Anura,Hylidae,Osteopilus,septentrionalis,Osteopilus,septentrionalis,Cuban treefrog,lab,N/A,1,1,0,Towe_etal_2021,,,,,,
 Caudata,Ambystomatidae,Ambystoma,maculatum,Ambystoma,maculatum,spotted salamander,captive,Germany,1,0,0,Sabino-Pinto_etal_2018,Barnhart_etal_2020,,,,,
 Caudata,Ambystomatidae,Ambystoma,opacum,Ambystoma,opacum,marbled salamander,captive,Germany,1,0,0,Sabino-Pinto_etal_2018,,,,,,
 Caudata,Ambystomatidae,Ambystoma,mexicanum,Ambystoma,mexicanum,axolotl,captive,UK,1,0,0,Fitzpatrick_etal_2018,,,,,,
@@ -37,7 +38,7 @@ Caudata,Plethodontidae,Speleomantes,sp.,Hydromantes,sp.,N/A,captive,UK,1,0,1,Cun
 Caudata,Hynobiidae,Hynobius,leechii,Hynobius,leechii,Wonsan salamander,lab,N/A,1,0,1,Eunsun_etal_2019,,,,,,
 Caudata,Hynobiidae,Hynobius,nebulosus,Hynobius,nebulosus,Japanese clouded salamander,wild,Japan,1,0,1,Martel_etal_2014,Yap_etal_2017,,,,,
 Caudata,Salamandridae,Ichthyosaura,alpestris,Ichthyosaura,alpestris,alpine newt,wild,Belgium,1,0,1,Spitzen-vanderSluijs_etal_2016,Yap_etal_2017,,,,,
-Caudata,Salamandridae,Ichthyosaura,alpestris,Ichthyosaura,alpestris,alpine newt,wild,Germany,1,,1,Schulz_etal_2020,Thein_etal_2020,Lötters_etal_2020,,,,
+Caudata,Salamandridae,Ichthyosaura,alpestris,Ichthyosaura,alpestris,alpine newt,wild,Germany,1,,1,Schulz_etal_2020,Thein_etal_2020,Lotters_etal_2020,,,,
 Caudata,Salamandridae,Ichthyosaura,alpestris,Ichthyosaura,alpestris,alpine newt,wild,The Netherlands,1,1,1,Martel_etal_2014,Yap_etal_2017,Spitzen-vanderSluijs_etal_2016,,,,
 Caudata,Salamandridae,Ichthyosaura,alpestris,Ichthyosaura,alpestris,alpine newt,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,Stegen_etal_2017,,,,
 Caudata,Salamandridae,Ichthyosaura,alpestris,Ichthyosaura,alpestris,alpine newt,wild,Spain,1,1,1,Ribes_etal_2022,,,,,,
@@ -46,12 +47,12 @@ Caudata,Plethodontidae,Karsenia,koreana,Karsenia,koreana,Korean crevice salamand
 Caudata,Salamandridae,Laotriton,laoensis,Laotriton,laoensis,Laos warty newt,captive,Germany,1,0,0,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Salamandridae,Laotriton,laoensis,Laotriton,laoensis,Laos warty newt,captive,Sweden,1,0,0,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Salamandridae,Lissotriton,vulgaris,Lissotriton,vulgaris,smooth newt,wild,The Netherlands,1,0,1,Spitzen-vanderSluijs_etal_2016,Yap_etal_2017,,,,,
-Caudata,Salamandridae,Lissotriton,vulgaris,Lissotriton,vulgaris,smooth newt,wild,Germany,1,,1,Schulz_etal_2020,Lötters_etal_2020,,,,,
+Caudata,Salamandridae,Lissotriton,vulgaris,Lissotriton,vulgaris,smooth newt,wild,Germany,1,,1,Schulz_etal_2020,Lotters_etal_2020,,,,,
 Caudata,Salamandridae,Lissotriton,italicus,Lissotriton,italicus,Italian newt,lab,N/A,1,1,1,Martel_etal_2014,,,,,,
 Caudata,Salamandridae,Lissotriton,boscai,Lissotriton,boscai,Bosca's newt,captive,UK,1,1,1,Fitzpatrick_etal_2018,,,,,,
 Caudata,Salamandridae,Lissotriton,helveticus,Lissotriton,helveticus,palmate newt,captive,UK,1,1,1,Fitzpatrick_etal_2018,,,,,,
 Caudata,Salamandridae,Lissotriton,helveticus,Lissotriton,helveticus,palmate newt,wild,Spain,1,1,1,LastraGonzalez_etal_2019,,,,,,
-Caudata,Salamandridae,Lissotriton,helveticus,Lissotriton,helveticus,palmate newt,wild,Germany,1,,1,Schulz_etal_2020,Lötters_etal_2020,,,,,
+Caudata,Salamandridae,Lissotriton,helveticus,Lissotriton,helveticus,palmate newt,wild,Germany,1,,1,Lotters_etal_2020,,,,,,
 Caudata,Salamandridae,Lissotriton,helveticus,Lissotriton,helveticus,palmate newt,lab,N/A,1,0,1,Martel_etal_2014,,,,,,
 Caudata,Salamandridae,Lissotriton,vulgaris,Lissotriton,vulgaris,smooth newt,lab,N/A,1,1,1,Bates_etal_2019,,,,,,
 Caudata,Salamandridae,Neurergus,crocatus,Neurergus,crocatus,yellow-spotted newt,lab,N/A,1,1,1,Martel_etal_2014,,,,,,
@@ -77,7 +78,7 @@ Caudata,Salamandridae,Paramesotriton,hongkongensis,Paramesotriton,hongkongensis,
 Caudata,Salamandridae,Paramesotriton,hongkongensis,Paramesotriton,hongkongensis,Hong Kong warty newt,captive,Sweden,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Plethodontidae,Plethodon,glutinosus,Plethodon,glutinosus,northern slimy salamander,lab,N/A,1,0,1,Martel_etal_2014,https://www.federalregister.gov/documents/2016/01/13/2016-00452/injurious-wildlife-species-listing-salamanders-due-to-risk-of-salamander-chytrid-fungus,,,,,"even though Martel et al. 2014 do not report P. glutinosus as becoming infected, they do report skin invasion for this species"
 Caudata,Plethodontidae,Plethodon,metcalfi,Plethodon,metcalfi,southern gray-cheeked salamander,lab,N/A,1,0,1,Gray_etal_unpublished,,,,,,https://bsalproject.tennessee.edu/studies/
-Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,Friday_etal_2020,,,,
+Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,,,,,
 Caudata,Salamandridae,Pleurodeles,nebulosus,Pleurodeles,nebulosus,Algerian ribbed newt,captive,Germany,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Salamandridae,Pleurodeles,nebulosus,Pleurodeles,nebulosus,Algerian ribbed newt,captive,Sweden,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,captive,Germany,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
@@ -86,7 +87,7 @@ Caudata,Proteidae,Proteus,anguinus,Proteus,anguinus,olm,lab,N/A,1,0,0,Li_etal_20
 Caudata,Plethodontidae,Pseudotriton,ruber,Pseudotriton,ruber,red salamander,lab,N/A,1,1,0,Gray_etal_unpublished,Ossibof_etal_2019,Carter_etal_2019,,,,https://bsalproject.tennessee.edu/studies/
 Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,captive,Germany,1,1,1,Sabino-Pinto_etal_2015,Yap_etal_2017,,,,,
 Caudata,Salamandridae,Salamandra,algira,Salamandra,algira,African fire salamander,captive,Germany,1,1,1,Sabino-Pinto_etal_2015,Yap_etal_2017,,,,,
-Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,wild,Germany,1,1,1,Spitzen-vanderSluijs_etal_2016,Yap_etal_2017,Schulz_etal_2020,Lötters_etal_2020,Thein_etal_2020,,
+Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,wild,Germany,1,1,1,Spitzen-vanderSluijs_etal_2016,Yap_etal_2017,Schulz_etal_2020,Lotters_etal_2020,Thein_etal_2020,,
 Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,Stegen_etal_2017,,,,
 Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,wild,Belgium,1,1,1,Martel_etal_2014,Yap_etal_2017,Stegen_etal_2017,Blooi_etal_2013,Spitzen-vanderSluijs_etal_2016,,
 Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,wild,The Netherlands,1,1,1,Martel_etal_2014,Yap_etal_2017,Blooi_etal_2013,Spitzen-vanderSluijs_etal_2016,,,
@@ -103,7 +104,7 @@ Caudata,Hynobiidae,Salamandrella,keyserlingii,Salamandrella,keyserlingii,Siberia
 Caudata,Hynobiidae,Salamandrella,keyserlingii,Salamandrella,keyserlingii,Siberian salamander,wild,Japan,1,0,1,Martel_etal_2014,Yap_etal_2017,,,,,
 Caudata,Salamandridae,Salamandrina,perspicillata,Salamandrina,perspicillata,northern spectacled salamander,lab,N/A,1,1,1,Martel_etal_2014,,,,,,
 Caudata,Sirenidae,Siren,intermedia,Siren,intermedia,lesser siren,lab,N/A,1,0,1,Martel_etal_2014,Yap_etal_2017,,,,,
-Caudata,Salamandridae,Taricha,granulosa,Taricha,granulosa,Rough-skinned newt,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,Wilber_etal_2021,,,,https://bsalproject.tennessee.edu/studies/
+Caudata,Salamandridae,Taricha,granulosa,Taricha,granulosa,Rough-skinned newt,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,Wilber_etal_2021,,,,
 Caudata,Salamandridae,Taricha,torosa,Taricha,torosa,California newt,lab,N/A,1,1,1,Gray_etal_unpublished,,,,,,https://bsalproject.tennessee.edu/studies/
 Caudata,Salamandridae,Triturus,cristatus,Triturus,cristatus,great crested newt,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,Bates_etal_2019,,,,
 Caudata,Salamandridae,Triturus,pygmaeus,Triturus,pygmaeus,pygmy marbled newt,N/A,not specified,1,0,1,https://www.federalregister.gov/documents/2016/01/13/2016-00452/injurious-wildlife-species-listing-salamanders-due-to-risk-of-salamander-chytrid-fungus,,,,,,
@@ -124,11 +125,10 @@ Caudata,Salamandridae,Tylototriton,ziegleri,Tylototriton,ziegleri,Ziegler's croc
 Caudata,Salamandridae,Tylototriton,asperrimus,Tylototriton,asperrimus,Black knobby newt,wild,China,1,0,1,Yuan_etal_2018,,,,,,
 Caudata,Salamandridae,Tylototriton,verrucosus,Tylototriton,verrucosus,Himalayan newt,wild,China,1,0,1,Yuan_etal_2018,,,,,,
 Caudata,Salamandridae,Paramesotriton,sp.,Paramesotriton,sp.,N/A,wild,Vietnam,1,0,1,Laking_etal_2017,,,,,,
-Caudata,Plethodontidae,Speleomantes,strinatii,Hydromantes,strinatii,French cave salamander,lab,N/A,1,0,1,Martel_etal_2014,,,,,,
 Caudata,Salamandridae,Triturus,anatolicus,Triturus,anatolicus,Anatolian crested newt,wild,Spain,1,1,1,Martel_etal_2020,,,,,,
 Caudata,Salamandridae,Calotriton,arnoldi,Calotriton,arnoldi,Montensy brook salamander,lab,N/A,1,,0,Martel_etal_2020,,,,,,
 Caudata,Salamandridae,Triturus,anatolicus,Triturus,anatolicus,Anatolian crested newt,lab,N/A,1,,1,Martel_etal_2020,,,,,,
-Caudata,Salamandridae,Triturus,marmoratus,Triturus,marmoratus,marbled newt,lab,N/A,1,1,1,Martel_etal_2020,Friday_etal_2020,,,,,
+Caudata,Salamandridae,Triturus,marmoratus,Triturus,marmoratus,marbled newt,lab,N/A,1,1,1,Martel_etal_2020,,,,,,
 Caudata,Ambystomatidae,Ambystoma,maculatum,Ambystoma,maculatum,spotted salamander,lab,N/A,1,0,0,Martel_etal_2020,Barnhart_etal_2020,,,,,
 Caudata,Plethodontidae,Eurycea,wilderae,Eurycea,wilderae,Blue Ridge two-lined salamander,lab,N/A,1,,0,Martel_etal_2020,,,,,,
 Caudata,Plethodontidae,Eurycea,lucifuga,Eurycea,lucifuga,spotted-tail salamander,lab,N/A,1,,0,Martel_etal_2020,,,,,,
@@ -139,5 +139,5 @@ Caudata,Plethodontidae,Desmognathus,auriculatus ,Desmognathus,auriculatus ,Holbr
 Caudata,Plethodontidae,Desmognathus,conanti,Desmognathus,conanti,Spotted dusky salamander,lab,N/A,1,,0,Friday_etal_2020,,,,,,
 Caudata,Plethodontidae,Eurycea,cirrigera,Eurycea,cirrigera,Southern two-lined salamander,lab,N/A,1,1,0,Friday_etal_2020,,,,,,
 Caudata,Plethodontidae,Eurycea,guttolineata,Eurycea,guttolineata,three-lined salamander,lab,N/A,1,,0,Friday_etal_2020,,,,,,
-Caudata,Salamandridae,Triturus,cristatus,Triturus,cristatus,great crested newt,wild,Germany,1,,1,Lötters_etal_2020,,,,,,
+Caudata,Salamandridae,Triturus,cristatus,Triturus,cristatus,great crested newt,wild,Germany,1,,1,Lotters_etal_2020,,,,,,
 Caudata,Hynobiidae,Hynobius,sonani,Hynobius,sonani,Taichu salamander,wild,Taiwan,1,0,1,Beukema_etal_2018,,,,,,
