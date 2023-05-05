@@ -339,6 +339,25 @@ a.live %>%
   ungroup() %>%
   arrange(desc(quantity))
 
+# Summarize information about reported re-exports of amphibians
+
+a.live %>%
+  mutate(
+    matching_countries = ifelse(country_origin == country_imp_exp, 1, 0)
+  ) %>%
+  group_by(matching_countries) %>%
+  summarize(
+    n_shipments = n(),
+    n_individuals = sum(quantity)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    total_shipments = sum(n_shipments),
+    total_individuals = sum(n_individuals),
+    percent_shipments = n_shipments/total_shipments,
+    percent_individuals = n_individuals/total_individuals
+  )
+  
 
 # Summarize live amphibian imports of Bsal carrier genera by port of entry
 
@@ -451,6 +470,7 @@ a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.85, 0.85),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -459,7 +479,11 @@ ggsave("outputs/Fig1.png", width = 10, height = 8)
 a.live.table <- a.live %>%
   group_by(shipment_year) %>%
   summarize(quantity = sum(quantity)) %>%
-  ungroup()
+  ungroup() %>%
+  mutate(
+    shipment_year_s = shipment_year - 2016,
+    before_after = ifelse(shipment_year >= 2016, 1, 0)
+  )
 
 # What's the average number of live amphibians imported per year?
 
@@ -467,7 +491,19 @@ mean(a.live.table$quantity)
 
 # What's the trend over time?
 
-summary(lm(quantity ~ shipment_year, data = a.live.table))
+out <- glm(
+  quantity ~ shipment_year_s, 
+  data = a.live.table, 
+  family = poisson
+)
+summary(out)
+fitted <- fitted.values(out)
+diffs <- sapply(2:length(fitted), function(x) fitted[x] - fitted[x-1])
+mean(diffs)
+
+plot(quantity ~ shipment_year, data = a.live.table, ylim = c(0, 1e7))
+lines(a.live.table$shipment_year, fitted)
+
 
 # What's the average number of live amphibians imported per year in the most
 # recent 5 years?
@@ -547,6 +583,7 @@ a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.8, 0.85),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -660,6 +697,7 @@ a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.85, 0.85),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -731,6 +769,7 @@ panel.a <- a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.8, 0.8),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -791,13 +830,227 @@ a.live.lacey.table <- bind_rows(
   a.live.lacey.table, 
   data.frame(shipment_year = 2018, quantity = 0)
 ) %>%
-  arrange(shipment_year)
+  arrange(shipment_year) %>%
+  mutate(
+    shipment_year_s = shipment_year - 2016,
+    before_after = ifelse(shipment_year >= 2016, 1, 0)
+  )
 
 # What's the average number of live amphibians imported per year?
 mean(a.live.lacey.table$quantity)
 
 # What's the trend over time?
-summary(lm(quantity ~ shipment_year, data = a.live.lacey.table))
+out <- glm(
+  quantity ~ shipment_year_s, 
+  data = a.live.lacey.table, 
+  family = poisson
+)
+summary(out)
+fitted <- fitted.values(out)
+diffs <- sapply(2:length(fitted), function(x) fitted[x] - fitted[x-1])
+mean(diffs)
+
+plot(quantity ~ shipment_year, data = a.live.lacey.table, ylim = c(0, 1e6))
+lines(a.live.table$shipment_year, fitted)
+
+
+# Impact evaluation analysis
+
+# Model-fitting for the intervention group (listed species)
+out.i <- glm(
+  quantity ~ shipment_year_s * before_after, 
+  data = a.live.lacey.table, 
+  family = poisson
+)
+summary(out.i)
+fitted.i <- fitted.values(out.i)
+
+# Create panel for plot
+fitted.df.i <- data.frame(
+  shipment_year = a.live.lacey.table$shipment_year, 
+  pred = fitted.i
+)
+
+panel.a <- a.live.lacey.table %>%
+  ggplot(aes(x = shipment_year + 0.5, y = quantity)) +
+  geom_col(fill = alpha("black", 0.4)) + 
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = "black", size = 1.5,
+    data = fitted.df.i[1:17,]
+  ) +
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = "black", size = 1.5,
+    data = fitted.df.i[18:23,]
+  ) +
+  geom_vline(xintercept = 2016, size = 1, lty = 2) +
+  labs(x = "", y = "Number of Individuals") +
+  xlim(1999, 2022) +
+  theme_minimal() +
+  scale_y_continuous(
+    labels = scales::comma, 
+    limits = c(0, 1e6)
+  ) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    plot.background = element_rect(color = "white")
+  ) 
+
+# Repeat the same analysis for the control group (non-listed species)
+a.live.non.lacey.table <- a.live %>%
+  filter(!(genus_aw %in% lacey.act.genera)) %>% 
+  group_by(shipment_year) %>%
+  summarize(quantity = sum(quantity)) %>%
+  ungroup() %>%
+  mutate(
+    shipment_year_s = shipment_year - 2016,
+    before_after = ifelse(shipment_year >= 2016, 1, 0)
+  )
+
+# Verify that "a.live.non.lacey.act.table" represents all live trade
+# not represented by "a.live.lacey.act.table"
+sum(a.live.lacey.table$quantity) + sum(a.live.non.lacey.table$quantity) ==
+  sum(a.live$quantity)
+
+# What's the average number of live amphibians imported per year?
+mean(a.live.non.lacey.table$quantity)
+
+# Model-fitting
+out.c <- glm(
+  quantity ~ shipment_year_s * before_after, 
+  data = a.live.non.lacey.table, 
+  family = poisson
+)
+summary(out.c)
+fitted.c <- fitted.values(out.c)
+
+# Create a panel for plot
+fitted.df.c <- data.frame(
+  shipment_year = a.live.non.lacey.table$shipment_year, 
+  pred = fitted.c
+)
+
+panel.b <- a.live.non.lacey.table %>%
+  ggplot(aes(x = shipment_year + 0.5, y = quantity)) +
+  geom_col(fill = alpha("forestgreen", 0.4)) + 
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = "forestgreen", size = 1.5,
+    data = fitted.df.c[1:17,]
+  ) +
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = "forestgreen", size = 1.5,
+    data = fitted.df.c[18:23,]
+  ) +
+  geom_vline(xintercept = 2016, size = 1, lty = 2) +
+  labs(x = "Shipment Year", y = "Number of Individuals") +
+  xlim(1999, 2022) +
+  theme_minimal() +
+  scale_y_continuous(
+    labels = scales::comma, 
+    limits = c(0, 6e6)
+  ) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    plot.background = element_rect(color = "white")
+  ) 
+
+# Create a vertically-oriented plot
+cowplot::plot_grid(
+  panel.a, panel.b, 
+  labels = c("a", "b"), label_size = 20, 
+  ncol = 1
+)
+
+ggsave("outputs/Fig5.png", width = 10, height = 10)
+
+# Can verify that a full before-after control-intervention model will
+# give identical results (it's just harder to interpret)
+baci.data <- bind_rows(
+  a.live.lacey.table %>%
+    mutate(
+      intervention = rep(1, n()),
+      intervention_name = rep("Listed", n())
+    ),
+  a.live.non.lacey.table %>%
+    mutate(
+      intervention = rep(0, n()),
+      intervention_name = rep("Not Listed", n())
+    )
+)
+
+# Model-fitting for full dataset
+out.full <- glm(
+  quantity ~ shipment_year_s * before_after * intervention, 
+  data = baci.data, 
+  family = poisson
+)
+summary(out.full)
+fitted.full <- fitted.values(out.full)
+
+# An alternative plot style with log10 axis and points instead of bars
+fitted.df.full <- data.frame(
+  shipment_year = a.live.non.lacey.table$shipment_year, 
+  pred = fitted.full,
+  intervention_name = rep(c("Listed", "Not Listed"), each = 23)
+)
+
+baci.data %>%
+  filter(quantity > 0) %>%
+  ggplot(aes(x = shipment_year + 0.5, y = quantity + 1, color = intervention_name)) +
+  geom_vline(xintercept = 2016, size = 1, lty = 2) +
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = alpha("darkgrey", 1),
+    size = 2,
+    data = fitted.df.full[1:17,]
+  ) +
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = alpha("darkgrey", 1),
+    size = 2,
+    data = fitted.df.full[18:23,]
+  ) +
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = alpha("forestgreen", 1),
+    size = 2,
+    data = fitted.df.full[1:17 + 23,]
+  ) +
+  geom_line(
+    aes(x = shipment_year + 0.5, y = pred), 
+    col = alpha("forestgreen", 1),
+    size = 2,
+    data = fitted.df.full[18:23 + 23,]
+  ) +
+  geom_point(size = 7) +
+  labs(x = "Shipment Year", y = "Number of Individuals") +
+  theme_minimal() +
+  scale_y_log10(labels = scales::comma, limits = c(1, 1e7)) +
+  scale_color_manual(
+    values = c(
+      alpha("darkgrey", 0.5),
+      alpha("forestgreen", 0.5)
+    )
+  ) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    text = element_text(size = 20),
+    axis.title.x = element_text(face = "bold", size = 22),
+    axis.title.y = element_text(face = "bold", size = 22),
+    legend.title = element_blank(),
+    legend.spacing.y = unit(1, "mm"),
+    plot.background = element_rect(color = "white")
+  ) 
+
 
 # What's the stated purpose and clearance status of recent Lacey Act 
 # genera shipments?
@@ -887,6 +1140,7 @@ panel.a <- a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.8, 0.75),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -925,7 +1179,7 @@ cowplot::plot_grid(
   ncol = 1, rel_heights = c(6, 4)
 )
 
-ggsave("outputs/Fig5.png", width = 10, height = 10)
+ggsave("outputs/Fig6.png", width = 10, height = 10)
 
 a.live.bsal.carrier.species.table <- a.live %>%
   filter(scientific_name %in% bsal.carrier.species) %>% 
@@ -979,6 +1233,7 @@ panel.a <- a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.85, 0.87),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -1013,6 +1268,7 @@ panel.b <- a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.8, 0.85),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   )
 
@@ -1046,6 +1302,7 @@ panel.c <- a.live %>%
     legend.title = element_blank(),
     legend.position = c(0.85, 0.85),
     legend.background = element_rect(),
+    legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -1060,7 +1317,7 @@ cowplot::plot_grid(
   ncol = 1
 )
 
-ggsave("outputs/Fig6.png", width = 16, height = 16)
+ggsave("outputs/Fig7.png", width = 16, height = 16)
 
 a.live.bsal.carrier.genera.table <- a.live %>%
   filter(genus_aw %in% bsal.carrier.genera) %>% 

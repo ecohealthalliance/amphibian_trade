@@ -31,8 +31,8 @@ Caudata,Salamandridae,Cynops,ensicauda,Cynops,ensicauda,sword-tailed newt,captiv
 Caudata,Plethodontidae,Desmognathus,ocoee,Desmognathus,ocoee,Ocoee salamander,lab,N/A,1,0,0,Gray_etal_unpublished,,,,,,https://bsalproject.tennessee.edu/studies/
 Caudata,Plethodontidae,Ensatina,eschscholtzii,Ensatina,eschscholtzii,ensatina,lab,N/A,1,1,0,Gray_etal_unpublished,Ossibof_etal_2019,,,,,https://bsalproject.tennessee.edu/studies/
 Caudata,Salamandridae,Euproctus,platycephalus,Euproctus,platycephalus,Sardinian brook salamander,lab,N/A,1,1,1,Martel_etal_2014,,,,,,
-Caudata,Plethodontidae,Eurycea,wilderae,Eurycea,wilderae,Blue Ridge two-lined salamander,lab,N/A,1,1,0,Gray_etal_unpublished,Carter_etal_2019,,,,,https://bsalproject.tennessee.edu/studies/
-Caudata,Plethodontidae,Eurycea,lucifuga,Eurycea,lucifuga,cave salamander,lab,N/A,1,0,0,Gray_etal_unpublished,Carter_etal_2019,,,,,https://bsalproject.tennessee.edu/studies/
+Caudata,Plethodontidae,Eurycea,wilderae,Eurycea,wilderae,Blue Ridge two-lined salamander,lab,N/A,1,1,0,Gray_etal_unpublished,Carter_etal_2020,,,,,https://bsalproject.tennessee.edu/studies/
+Caudata,Plethodontidae,Eurycea,lucifuga,Eurycea,lucifuga,cave salamander,lab,N/A,1,0,0,Gray_etal_unpublished,Carter_etal_2020,,,,,https://bsalproject.tennessee.edu/studies/
 Caudata,Plethodontidae,Hydromantes,strinatii,Hydromantes,strinatii,French cave salamander,lab,N/A,1,1,1,Martel_etal_2014,Yap_etal_2017,,,,,
 Caudata,Plethodontidae,Speleomantes,sp.,Hydromantes,sp.,N/A,captive,UK,1,0,1,Cunningham_etal_2015,VanRooij_etal_2015,https://chytridcrisis.wordpress.com/2015/04/29/batrachochytrium-salamandrivorans-found-in-the-uk/,,,,
 Caudata,Hynobiidae,Hynobius,leechii,Hynobius,leechii,Wonsan salamander,lab,N/A,1,0,1,Eunsun_etal_2019,,,,,,
@@ -84,7 +84,7 @@ Caudata,Salamandridae,Pleurodeles,nebulosus,Pleurodeles,nebulosus,Algerian ribbe
 Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,captive,Germany,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,captive,Sweden,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Proteidae,Proteus,anguinus,Proteus,anguinus,olm,lab,N/A,1,0,0,Li_etal_2020b,,,,,,
-Caudata,Plethodontidae,Pseudotriton,ruber,Pseudotriton,ruber,red salamander,lab,N/A,1,1,0,Gray_etal_unpublished,Ossibof_etal_2019,Carter_etal_2019,,,,https://bsalproject.tennessee.edu/studies/
+Caudata,Plethodontidae,Pseudotriton,ruber,Pseudotriton,ruber,red salamander,lab,N/A,1,1,0,Gray_etal_unpublished,Ossibof_etal_2019,Carter_etal_2020,,,,https://bsalproject.tennessee.edu/studies/
 Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,captive,Germany,1,1,1,Sabino-Pinto_etal_2015,Yap_etal_2017,,,,,
 Caudata,Salamandridae,Salamandra,algira,Salamandra,algira,African fire salamander,captive,Germany,1,1,1,Sabino-Pinto_etal_2015,Yap_etal_2017,,,,,
 Caudata,Salamandridae,Salamandra,salamandra,Salamandra,salamandra,fire salamander,wild,Germany,1,1,1,Spitzen-vanderSluijs_etal_2016,Yap_etal_2017,Schulz_etal_2020,Lotters_etal_2020,Thein_etal_2020,,
