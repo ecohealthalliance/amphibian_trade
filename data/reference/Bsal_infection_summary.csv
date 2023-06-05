@@ -77,7 +77,7 @@ Caudata,Salamandridae,Paramesotriton,hongkongensis,Paramesotriton,hongkongensis,
 Caudata,Salamandridae,Paramesotriton,hongkongensis,Paramesotriton,hongkongensis,Hong Kong warty newt,captive,Sweden,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Plethodontidae,Plethodon,glutinosus,Plethodon,glutinosus,northern slimy salamander,lab,N/A,1,0,1,Martel_etal_2014,https://www.federalregister.gov/documents/2016/01/13/2016-00452/injurious-wildlife-species-listing-salamanders-due-to-risk-of-salamander-chytrid-fungus,,,,,"even though Martel et al. 2014 do not report P. glutinosus as becoming infected, they do report skin invasion for this species"
 Caudata,Plethodontidae,Plethodon,metcalfi,Plethodon,metcalfi,southern gray-cheeked salamander,lab,N/A,1,0,1,Gray_etal_2023,,,,,,
-Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,lab,N/A,1,1,1,Martel_etal_2014,Friday_etal_2020,,,,,
+Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,lab,N/A,1,1,1,Martel_etal_2014,,,,,,
 Caudata,Salamandridae,Pleurodeles,nebulosus,Pleurodeles,nebulosus,Algerian ribbed newt,captive,Germany,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Salamandridae,Pleurodeles,nebulosus,Pleurodeles,nebulosus,Algerian ribbed newt,captive,Sweden,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
 Caudata,Salamandridae,Pleurodeles,waltl,Pleurodeles,waltl,Iberian ribbed newt,captive,Germany,1,0,1,Sabino-Pinto_etal_2018,,,,,,unconfirmed positive; not specified if Germany or Sweden
@@ -126,7 +126,7 @@ Caudata,Salamandridae,Paramesotriton,sp.,Paramesotriton,sp.,N/A,wild,Vietnam,1,0
 Caudata,Salamandridae,Triturus,anatolicus,Triturus,anatolicus,Anatolian crested newt,wild,Spain,1,1,1,Martel_etal_2020,,,,,,
 Caudata,Salamandridae,Calotriton,arnoldi,Calotriton,arnoldi,Montensy brook salamander,lab,N/A,1,1,0,Martel_etal_2020,,,,,,
 Caudata,Salamandridae,Triturus,anatolicus,Triturus,anatolicus,Anatolian crested newt,lab,N/A,1,1,1,Martel_etal_2020,,,,,,
-Caudata,Salamandridae,Triturus,marmoratus,Triturus,marmoratus,marbled newt,lab,N/A,1,1,1,Martel_etal_2020,Friday_etal_2020,,,,,
+Caudata,Salamandridae,Triturus,marmoratus,Triturus,marmoratus,marbled newt,lab,N/A,1,1,1,Martel_etal_2020,,,,,,
 Caudata,Ambystomatidae,Ambystoma,maculatum,Ambystoma,maculatum,spotted salamander,lab,N/A,1,0,0,Martel_etal_2020,Barnhart_etal_2020,,,,,
 Caudata,Salamandridae,Lyciasalamandra,helverseni,Lyciasalamandra,helverseni,Karpathos salamander,lab,N/A,1,1,0,Li_etal_2020a,,,,,,
 Caudata,Plethodontidae,Desmognathus,apalachicolae,Desmognathus,apalachicolae,Apalachicola dusky salamander,lab,N/A,1,1,0,Friday_etal_2020,,,,,,
