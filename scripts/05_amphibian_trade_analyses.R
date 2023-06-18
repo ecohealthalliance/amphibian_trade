@@ -1,4 +1,5 @@
 library(tidyverse)
+library(ggtext)
 library(assertthat)
 
 options(scipen = 10000)
@@ -28,12 +29,12 @@ a <- read_csv("data/cleaned/harmonized_amphibian_LEMIS_1999_to_2021.csv") %>%
 #==============================================================================
 
 
-# How many records overall?
+# How many amphibian records are there overall?
 
 nrow(a)
 
-# How many shipments overall?
-# But note that some years don't have "control_number" at all, so this would be
+# How many amphibian shipments overall?
+# But note that some years don't have "control_number" at all, so this is
 # an underestimate of shipment numbers
 
 n_distinct(a$control_number)
@@ -89,13 +90,12 @@ aw.genera <- aw.taxonomy %>%
 # Generate a vector of unique AmphibiaWeb species
 
 aw.species <- aw.taxonomy %>%
-  select(genus, species) %>%
   mutate(scientific_name = paste(genus, species)) %>%
   pull(scientific_name) %>%
   unique() %>%
   sort()
 
-# How many AmphibiaWeb species are in the full dataset?
+# How many AmphibiaWeb species are in the full LEMIS amphibian dataset?
 
 sum(unique(a$scientific_name) %in% aw.species)
 
@@ -104,11 +104,11 @@ sum(unique(a$scientific_name) %in% aw.species)
 
 # Good names down to species
 sum(a$scientific_name %in% aw.species)/nrow(a)
-# Proportion of records only reported to "sp."
+# Proportion of records only reported to "sp." for species
 nrow(filter(a, species_aw == "sp."))/nrow(a)
 # Good names down to genus
 sum(a$genus_aw %in% aw.genera)/nrow(a)
-# Proportion of records recorded as "Non-CITES entry"
+# Proportion of records recorded as "Non-CITES entry" for genus
 nrow(filter(a, genus_aw == "Non-CITES entry"))/nrow(a)
 
 #==============================================================================
@@ -172,7 +172,8 @@ nrow(bsal.summary.data)
 
 table(bsal.summary.data$type, useNA = "ifany")
 
-# Verify that the species name never changed when updating to AW taxonomy
+# Verify that the species name never changed when updating from raw 
+# to AW taxonomy
 
 assert_that(sum(bsal.summary.data$species == bsal.summary.data$species_aw) ==
               nrow(bsal.summary.data))
@@ -196,8 +197,8 @@ sort(unique(bsal.summary.data$family))
 # Create a vector of Bsal carrier genera
 
 bsal.carrier.genera <- bsal.summary.data %>%
-  distinct(genus_aw) %>% 
   pull(genus_aw) %>%
+  unique() %>%
   sort()
 
 assert_that(sum(bsal.carrier.genera %in% aw.genera) == length(bsal.carrier.genera))
@@ -207,7 +208,6 @@ length(bsal.carrier.genera)
 # Create a vector of Bsal carrier species
 
 bsal.carrier.species <- bsal.summary.data %>%
-  select(genus_aw, species_aw) %>%
   filter(species_aw != "sp.") %>%
   mutate(scientific_name = paste(genus_aw, species_aw)) %>%
   pull(scientific_name) %>%
@@ -294,7 +294,10 @@ sum(a.live.bsal.carrier.species$quantity)
 
 # How many unique ports of entry for live amphibians?
 
-unique(a.live$port_full) %>% sort()
+a.live %>% 
+  pull(port_full) %>%
+  unique() %>%
+  sort()
 
 # Summarize all live amphibian imports by port of entry
 
@@ -362,7 +365,7 @@ a.live %>%
 # Summarize live amphibian imports of Bsal carrier genera by port of entry
 
 a.live.bsal.carrier.genera %>%
-  group_by(port) %>%
+  group_by(port, port_full) %>%
   summarize(
     n_shipments = n(), 
     total_individuals = sum(quantity)) %>%
@@ -381,7 +384,7 @@ a.live.bsal.carrier.genera %>%
 # Summarize live amphibian imports from Bsal endemic countries by port of entry
 
 a.live.bsal.countries %>%
-  group_by(port) %>%
+  group_by(port, port_full) %>%
   summarize(
     n_shipments = n(), 
     total_individuals = sum(quantity)) %>%
@@ -391,7 +394,7 @@ a.live.bsal.countries %>%
 # origin
 
 a.live.bsal.countries %>%
-  group_by(country_origin) %>%
+  group_by(country_origin, country_origin_full) %>%
   summarize(
     n_shipments = n(), 
     total_individuals = sum(quantity)) %>%
@@ -401,7 +404,7 @@ a.live.bsal.countries %>%
 # Summarize live caudate imports from Bsal endemic countries by port of entry
 
 a.live.caudates.bsal.countries %>%
-  group_by(port) %>%
+  group_by(port, port_full) %>%
   summarize(
     n_shipments = n(), 
     total_individuals = sum(quantity)) %>%
@@ -411,7 +414,7 @@ a.live.caudates.bsal.countries %>%
 # origin
 
 a.live.caudates.bsal.countries %>%
-  group_by(country_origin) %>%
+  group_by(country_origin, country_origin_full) %>%
   summarize(
     n_shipments = n(), 
     total_individuals = sum(quantity)) %>%
@@ -467,8 +470,10 @@ a.live %>%
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
-    legend.position = c(0.85, 0.85),
+    legend.text = element_text(size = 22),
+    legend.position = c(0.8, 0.85),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
@@ -489,27 +494,31 @@ a.live.table <- a.live %>%
 
 mean(a.live.table$quantity)
 
+
 # What's the trend over time?
 
+# Fit model
 out <- glm(
   quantity ~ shipment_year_s, 
   data = a.live.table, 
   family = poisson
 )
+
+# Summarize model
 summary(out)
 fitted <- fitted.values(out)
 diffs <- sapply(2:length(fitted), function(x) fitted[x] - fitted[x-1])
 mean(diffs)
 
+# Visualize model
 plot(quantity ~ shipment_year, data = a.live.table, ylim = c(0, 1e7))
 lines(a.live.table$shipment_year, fitted)
 
 
-# What's the average number of live amphibians imported per year in the most
-# recent 5 years?
+# What's the average number of live amphibians imported per year since 2016?
 
 a.live.table %>%
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   pull(quantity) %>%
   mean()
 
@@ -549,8 +558,8 @@ a.leg.meat %>%
 
 # Question 2
 
-# What percentage of amphibians imported to the US are coming from countries 
-# with Bsal and how has this changed over time?  
+# What percentage of live amphibians imported to the US are coming from
+# countries with Bsal and how has this changed over time?  
 
 key.bsal.countries <- c("CN", "HK", "TW")
 
@@ -574,14 +583,22 @@ a.live %>%
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Country") +
   theme_minimal() + 
   scale_y_continuous(labels = scales::comma) +
-  scale_fill_manual(values = palette) +
+  scale_fill_manual(
+    values = palette,
+    breaks = c("China", "Hong Kong", "Taiwan",
+               "Other Bsal Country", "Non-Bsal Country"),
+    labels = c("China", "Hong Kong", "Taiwan",
+               "Other *Bsal* Country", "Non-*Bsal* Country"),
+  ) +
   theme(
     plot.title = element_text(face = "bold"),
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
-    legend.position = c(0.8, 0.85),
+    legend.text = element_markdown(size = 22),
+    legend.position = c(0.75, 0.85),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
@@ -618,7 +635,7 @@ a.live %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
 
 
-# Compare exporting countries to wildlife trade more generally
+# Compare with exporting countries for wildlife trade more generally
 
 l <- lemis::lemis_data() %>%
   filter(description == "LIV") %>%
@@ -694,8 +711,10 @@ a.live %>%
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
-    legend.position = c(0.85, 0.85),
+    legend.text = element_text(size = 22),
+    legend.position = c(0.8, 0.85),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
@@ -719,7 +738,7 @@ a.live %>%
   mutate(yearly_percent = quantity.x/quantity.y*100)
 
 
-# Compare ports of entry to wildlife trade more generally
+# Compare with ports of entry for wildlife trade more generally
 
 l %>%
   group_by(port) %>%
@@ -760,14 +779,22 @@ panel.a <- a.live %>%
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma) +
-  scale_fill_manual(values = palette) +
+  scale_fill_manual(
+    values = palette,
+    breaks = c("Cynops", "Paramesotriton", "Pleurodeles",
+               "Salamandra", "Triturus", "Other Lacey Act Genera"),
+    labels = c("*Cynops*", "*Paramesotriton*", "*Pleurodeles*",
+               "*Salamandra*", "*Triturus*", "Other Lacey Act Genera")
+  ) +
   theme(
     plot.title = element_text(face = "bold"),
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
-    legend.position = c(0.8, 0.8),
+    legend.text = element_markdown(size = 22),
+    legend.position = c(0.75, 0.8),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
@@ -775,7 +802,7 @@ panel.a <- a.live %>%
 
 panel.b <- a.live %>%
   filter(genus_aw %in% lacey.act.genera) %>% 
-  filter(shipment_year > 2015) %>%
+  filter(shipment_year >= 2016) %>%
   mutate(
     genus_aw = ifelse(
       genus_aw %in% key.lacey.act.genera,
@@ -801,6 +828,7 @@ panel.b <- a.live %>%
     text = element_text(size = 16),
     axis.title.x = element_text(face = "bold", size = 18),
     axis.title.y = element_text(face = "bold", size = 18),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
     legend.position = "none",
     plot.background = element_rect(color = "white")
@@ -825,6 +853,8 @@ a.live.lacey.table <- a.live %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
 
+nrow(a.live.lacey.table)
+
 # No Lacey Act genera in 2018 at all, so add that data
 a.live.lacey.table <- bind_rows(
   a.live.lacey.table, 
@@ -836,27 +866,34 @@ a.live.lacey.table <- bind_rows(
     before_after = ifelse(shipment_year >= 2016, 1, 0)
   )
 
+nrow(a.live.lacey.table)
+
 # What's the average number of live amphibians imported per year?
 mean(a.live.lacey.table$quantity)
 
 # What's the trend over time?
+
+# Fit model
 out <- glm(
   quantity ~ shipment_year_s, 
   data = a.live.lacey.table, 
   family = poisson
 )
+
+# Summarize model
 summary(out)
 fitted <- fitted.values(out)
 diffs <- sapply(2:length(fitted), function(x) fitted[x] - fitted[x-1])
 mean(diffs)
 
+# Visualize model
 plot(quantity ~ shipment_year, data = a.live.lacey.table, ylim = c(0, 1e6))
 lines(a.live.table$shipment_year, fitted)
 
 
 # Impact evaluation analysis
 
-# Model-fitting for the intervention group (listed species)
+# Model-fitting for the intervention group (Lacey Act listed species)
 out.i <- glm(
   quantity ~ shipment_year_s * before_after, 
   data = a.live.lacey.table, 
@@ -897,6 +934,7 @@ panel.a <- a.live.lacey.table %>%
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -910,6 +948,8 @@ a.live.non.lacey.table <- a.live %>%
     shipment_year_s = shipment_year - 2016,
     before_after = ifelse(shipment_year >= 2016, 1, 0)
   )
+
+nrow(a.live.non.lacey.table)
 
 # Verify that "a.live.non.lacey.act.table" represents all live trade
 # not represented by "a.live.lacey.act.table"
@@ -960,6 +1000,7 @@ panel.b <- a.live.non.lacey.table %>%
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     plot.background = element_rect(color = "white")
   ) 
 
@@ -1053,7 +1094,7 @@ baci.data %>%
 
 
 # What's the stated purpose and clearance status of recent Lacey Act 
-# genera shipments?
+# genera shipments post-2016?
 a.live %>%
   filter(
     genus_aw %in% lacey.act.genera,
@@ -1107,9 +1148,8 @@ ggsave("outputs/live_amphibian_imports_Lacey_Act_status.png",
 # Species-level analyses
 
 key.bsal.carrier.genera <- 
-  c("Ambystoma", "Anaxyrus", "Andrias", "Cynops", 
-    "Paramesotriton", "Pleurodeles", "Salamandra", "Scaphiopus",
-    "Triturus", "Other Genera")
+  c("Ambystoma", "Cynops", "Paramesotriton", "Pleurodeles", "Salamandra",
+    "Other Genera")
 
 panel.a <- a.live %>%
   filter(scientific_name %in% bsal.carrier.species) %>% 
@@ -1131,14 +1171,22 @@ panel.a <- a.live %>%
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma) +
-  scale_fill_manual(values = palette) +
+  scale_fill_manual(
+    values = palette,
+    breaks = c("Ambystoma", "Cynops", "Paramesotriton", "Pleurodeles", 
+               "Salamandra", "Other Genera"),
+    labels = c("*Ambystoma*", "*Cynops*", "*Paramesotriton*", "*Pleurodeles*", 
+               "*Salamandra*", "Other Genera")
+  ) +
   theme(
     plot.title = element_text(face = "bold"),
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
-    legend.position = c(0.8, 0.75),
+    legend.text = element_markdown(size = 22),
+    legend.position = c(0.8, 0.8),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
@@ -1146,7 +1194,16 @@ panel.a <- a.live %>%
 
 panel.b <- a.live %>%
   filter(scientific_name %in% bsal.carrier.species) %>% 
-  filter(shipment_year > 2015) %>%
+  mutate(
+    genus_aw = ifelse(
+      genus_aw %in% key.bsal.carrier.genera,
+      genus_aw,
+      "Other Genera"
+    ),
+    genus_aw = as.factor(genus_aw),
+    genus_aw = forcats::fct_relevel(genus_aw, key.bsal.carrier.genera)
+  ) %>%
+  filter(shipment_year >= 2016) %>%
   group_by(shipment_year, genus_aw) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
@@ -1163,6 +1220,7 @@ panel.b <- a.live %>%
     text = element_text(size = 16),
     axis.title.x = element_text(face = "bold", size = 18),
     axis.title.y = element_text(face = "bold", size = 18),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
     legend.position = "none",
     plot.background = element_rect(color = "white")
@@ -1191,9 +1249,9 @@ n_distinct(a.live.bsal.carrier.species.table$genus_aw)
 n_distinct(a.live.bsal.carrier.species.table$species_aw)
 n_distinct(a.live.bsal.carrier.species.table$scientific_name)
 
-# How many of these Bsal carrier species were imported per year recently?
+# How many of these Bsal carrier species were imported per year since 2016?
 a.live.bsal.carrier.species.table %>%
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   group_by(shipment_year) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
@@ -1224,13 +1282,19 @@ panel.a <- a.live %>%
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Genus") +
   theme_minimal() +
   scale_y_continuous(labels = scales::comma, limits = c(0, 4500000)) +
-  scale_fill_manual(values = palette) +
+  scale_fill_manual(
+    values = palette,
+    breaks = c("Bombina", "Cynops", "Rana", "Triturus", "Other Genera"),
+    labels = c("*Bombina*", "*Cynops*", "*Rana*", "*Triturus*", "Other Genera")
+  ) +
   theme(
     plot.title = element_text(face = "bold"),
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
+    panel.grid.minor.x = element_blank(),
     legend.title = element_blank(),
+    legend.text = element_markdown(),
     legend.position = c(0.85, 0.87),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
@@ -1239,7 +1303,7 @@ panel.a <- a.live %>%
 
 panel.b <- a.live %>%
   filter(genus_aw %in% bsal.carrier.genera) %>% 
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   mutate(
     country_origin_mod = case_when(
       country_origin %in% key.bsal.countries ~ country_origin_full,
@@ -1259,14 +1323,21 @@ panel.b <- a.live %>%
   labs(x = "Shipment Year", y = "Number of Individuals", fill = "Country") +
   theme_minimal() + 
   scale_y_continuous(labels = scales::comma, limits = c(0, 4000000)) +
-  scale_fill_manual(values = palette) +
+  scale_fill_manual(
+    values = palette,
+    breaks = c("China", "Hong Kong", "Taiwan", 
+               "Other Bsal Country", "Non-Bsal Country"),
+    labels = c("China", "Hong Kong", "Taiwan", 
+               "Other *Bsal* Country", "Non-*Bsal* Country")
+  ) +
   theme(
     plot.title = element_text(face = "bold"),
     text = element_text(size = 20),
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
     legend.title = element_blank(),
-    legend.position = c(0.8, 0.85),
+    legend.text = element_markdown(),
+    legend.position = c(0.25, 0.85),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
@@ -1274,7 +1345,7 @@ panel.b <- a.live %>%
 
 panel.c <- a.live %>%
   filter(genus_aw %in% bsal.carrier.genera) %>% 
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   mutate(
     port_full_mod = case_when(
       port %in% ports.of.interest ~ port_full,
@@ -1300,7 +1371,7 @@ panel.c <- a.live %>%
     axis.title.x = element_text(face = "bold", size = 22),
     axis.title.y = element_text(face = "bold", size = 22),
     legend.title = element_blank(),
-    legend.position = c(0.85, 0.85),
+    legend.position = c(0.25, 0.85),
     legend.background = element_rect(),
     legend.spacing.y = unit(1, "mm"),
     plot.background = element_rect(color = "white")
@@ -1333,9 +1404,9 @@ yearly.summary <- a.live.bsal.carrier.genera.table %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup()
 
-# What's the average number in recent years?
+# What's the average number annually since 2016?
 yearly.summary %>%
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   pull(quantity) %>%
   mean()
 
@@ -1346,7 +1417,7 @@ yearly.summary %>%
 
 # Each genera expressed as a percentage of Bsal carrier trade
 a.live.bsal.carrier.genera.table %>%
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   group_by(shipment_year, genus_aw) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
@@ -1355,7 +1426,7 @@ a.live.bsal.carrier.genera.table %>%
 
 # Percentage of recent trade coming from countries
 a.live.bsal.carrier.genera.table %>%
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   group_by(shipment_year, country_origin) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
@@ -1364,7 +1435,7 @@ a.live.bsal.carrier.genera.table %>%
 
 # Percentage of recent trade coming to ports
 a.live.bsal.carrier.genera.table %>%
-  filter(shipment_year > 2016) %>%
+  filter(shipment_year >= 2016) %>%
   group_by(shipment_year, port_full) %>%
   summarize(quantity = sum(quantity)) %>%
   ungroup() %>%
