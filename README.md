@@ -2,7 +2,7 @@
 
 This repository contains code, data, and figures that support:
 
-Connelly, P.J., N. Ross, O.C. Stringham, and E.A. Eskew. 2023. Ongoing amphibian trade into the United States threatens salamander biodiversity.
+Connelly, P.J., N. Ross, O.C. Stringham, and E.A. Eskew. 2023. [United States amphibian imports pose a disease risk to salamanders despite Lacey Act regulations](https://doi.org/10.1038/s43247-023-01004-z). Communications Earth & Environment 4: 351.
 
 The global amphibian trade is closely linked to wildlife disease issues because of the potential for spread of either of the two fungi responsible for amphibian chytridiomycosis, *Batrachochytrium dendrobatidis* (*Bd*) or *Batrachochytrium salamandrivorans* (*Bsal*). A primary aim of this project was evaluate the efficacy of a [2016 wildlife trade policy](https://www.federalregister.gov/documents/2016/01/13/2016-00452/injurious-wildlife-species-listing-salamanders-due-to-risk-of-salamander-chytrid-fungus) that sought to reduce the likelihood of *Bsal* introduction to the United States by banning the import of 20 salamander genera. To address this question and describe patterns in amphibian imports more generally, we collated and cleaned a dataset of amphibian imports into the United States from 1999 to 2021, building off [previous EcoHealth Alliance efforts to curate the United States Fish and Wildlife Service's Law Enforcement Management Information System (LEMIS) data](https://doi.org/10.1038/s41597-020-0354-5). The full, cleaned dataset, with taxonomy reconciled to the [AmphibiaWeb nomenclature](https://amphibiaweb.org/taxonomy/AWtaxonomy.html) is [available in this repository](/data/cleaned/harmonized_amphibian_LEMIS_1999_to_2021.csv).
 
